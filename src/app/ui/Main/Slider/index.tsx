@@ -127,8 +127,22 @@ const Slide = () => {
                     );
                 })
             ) : (
-                <div className="h-[400px] bg-gray-200 rounded-xl flex items-center justify-center">
-                    <p className="text-gray-500 font-bold">Sin eventos destacados</p>
+                <div className="md:h-[450px] h-[300px] bg-gradient-to-r from-[#861f21] to-[#b04b4d] rounded-xl flex items-center justify-center relative overflow-hidden group cursor-pointer">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                    <div className="relative z-10 text-center px-6">
+                        <h3 className="text-white md:text-4xl text-2xl font-bold mb-4 drop-shadow-lg">
+                            ¿Tienes un evento increíble?
+                        </h3>
+                        <p className="text-white md:text-xl text-lg mb-8 opacity-90">
+                            ¡Haz que todos lo vean aquí!
+                        </p>
+                        <Link
+                            href="/contacto"
+                            className="bg-white text-[#861f21] hover:bg-gray-100 transition-all transform hover:scale-105 px-8 py-3 rounded-full font-bold md:text-lg text-sm shadow-xl inline-block"
+                        >
+                            ¡DESTACA TU EVENTO AHORA!
+                        </Link>
+                    </div>
                 </div>
             )}
         </Slider>

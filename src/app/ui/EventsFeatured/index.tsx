@@ -31,7 +31,10 @@ const EventsFeatured = ({ setOpenAuth }: IProps) => {
 
     // Show skeleton while loading OR if no events yet (initial state)
     const showContent = !isLoading && eventsDestacades?.length > 0;
-    const showSkeleton = isLoading || (!isLoading && eventsDestacades?.length === 0);
+    const showSkeleton = isLoading;
+
+    // If not loading and no events, don't show the section at all
+    if (!isLoading && eventsDestacades?.length === 0) return null;
 
     return (
         <>
