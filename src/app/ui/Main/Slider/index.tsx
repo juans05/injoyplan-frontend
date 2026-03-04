@@ -129,8 +129,8 @@ const Slide = () => {
             ) : (
                 <div className="md:h-[450px] h-[300px] bg-gradient-to-r from-[#861f21] to-[#b04b4d] rounded-xl flex items-center justify-center relative overflow-hidden group cursor-pointer">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                    <div className="relative z-10 text-center px-6">
-                        <h3 className="text-white md:text-4xl text-2xl font-bold mb-4 drop-shadow-lg">
+                    <div className="relative z-10 text-center px-6 flex flex-col items-center justify-center h-full w-full">
+                        <h3 className="text-white md:text-4xl text-2xl font-bold mb-2 drop-shadow-lg">
                             ¿Tienes un evento increíble?
                         </h3>
                         <p className="text-white md:text-xl text-lg mb-8 opacity-90">
