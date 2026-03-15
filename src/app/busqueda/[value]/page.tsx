@@ -25,6 +25,7 @@ import Auth from "@/app/ui/Auth";
 import useAlertStore from "@/app/zustand/alert";
 import useDebounce from "@/app/hooks/useDebounce";
 import MoreFilters from "@/app/ui/MoreFilters";
+import CardSkeleton from '@/app/components/CardSkeleton';
 
 
 const BusquedaEvento = () => {
@@ -38,7 +39,7 @@ const BusquedaEvento = () => {
         weekdaysMin: 'Do_Lu_Ma_Mi_Ju_Vi_Sá'.split('_')
     });
 
-    const { getEventSearchByFilters, eventSearchByFilters, total, valueSearch }: IEventsState = useEventStore();
+    const { getEventSearchByFilters, eventSearchByFilters, total, valueSearch, isLoading }: IEventsState = useEventStore();
 
     // If navigating via category ID (params.value is a number), reset search text to empty
     // If navigating via search term (params.value is text like "moto"), use it as initial search value
@@ -58,13 +59,13 @@ const BusquedaEvento = () => {
     );
 
     const { countsCategories, getCategoriesCount, categoryInfo }: ICategoriesState = useCategoriesState();
+    const { addFavorite, deleteFavorite, favorites }: IFavoriteState = useFavoriteStore();
 
     // Initialize category from URL params if available (only if numeric), otherwise fallback to store or 0.
     // IF isAllCategories (param is 0), FORCE category to 0.
     // IF isSearchTerm (text search like "rock"), RESET category to 0 to show all categories
     const initialCategory = isNumericCategory ? paramAsNumber : (isAllCategories || isSearchTerm ? 0 : (categoryInfo !== null ? categoryInfo?.idCategorias : 0));
-    const [category, setCategory] = useState<number>(initialCategory);
-    const { addFavorite, deleteFavorite }: IFavoriteState = useFavoriteStore();
+    const [category, setCategory] = useState<number | string>(isNumericCategory ? paramAsNumber : 0);
     const { auth }: IAuthState = useAuthStore();
     const [openAuth, setOpenAuth] = useState<boolean>(false);
 
@@ -149,6 +150,7 @@ const BusquedaEvento = () => {
     const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
+    const [isOpenFilter, setIsOpenFilter, ref] = useOutsideClick(false);
 
     const handleDate = (value: string, _name: string) => {
         setDate(moment(value, 'DD/MM/YYYY').format('DD-MM-YYYY'));
@@ -270,7 +272,7 @@ const BusquedaEvento = () => {
         }
     }
 
-    const [isOpenFilter, setIsOpenFilter, ref] = useOutsideClick(false);
+
 
     const closeModal = () => {
         setIsOpenFilter(false);
@@ -399,7 +401,20 @@ const BusquedaEvento = () => {
                     </div>
 
                     {
-                        eventSearchByFilters === undefined || eventSearchByFilters?.length === 0 ? (
+                        isLoading ? (
+                            <div className="2xl:max-w-screen-2xl xl:max-w-screen-xl mx-auto lg:max-w-screen-lg px-3 lg:px-4 xl:px-32 mt-10">
+                                <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                    {[...Array(6)].map((_, i) => (
+                                        <CardSkeleton key={i} />
+                                    ))}
+                                </div>
+                                <div className="md:hidden px-8">
+                                    {[...Array(3)].map((_, i) => (
+                                        <CardSkeleton key={i} />
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (eventSearchByFilters === undefined || eventSearchByFilters?.length === 0) ? (
                             <div className="text-center mt-32 mb-32">
                                 <Image className="mx-auto grayscale" width={100} height={100} alt="No encontrados" src={ticket} />
                                 <label htmlFor="" className={quicksand.className + ' font-bold text-[#4a4a4a] mb-5'}>No encontramos eventos</label>
@@ -500,122 +515,126 @@ const BusquedaEvento = () => {
                             </ReactModal>
                         )
                     }
-                    <div className="2xl:max-w-screen-2xl xl:max-w-screen-xl lg:max-w-screen-lg lg:px-4 h-18 py-5 mx-auto p-0 mt-3 xl:px-32">
-                        <div className="hidden md:block">
-                            {
-                                eventSearchByFilters?.map((item: any, index: number) => (
-                                    <div className="relative" key={`${item?.idEventos ?? item?.ideventos}-${item?.idfecha ?? item?.FechaInicio}-${index}`}>
-                                        <Link href={`/evento/${item?.idEventos ?? item?.ideventos}/${item?.idfecha}`} target="_blank" rel="noopener noreferrer">
-                                            <motion.div {...({ className: "max-h-[200px] grid rounded-2xl items-center grid-cols-12 shadow-custom-2 mb-16 relative" }) as any}
-                                                style={{ cursor: "pointer" }}
-                                                layout
-                                                initial={{ opacity: 0, y: 50 }}  // Animación inicial (fuera de la vista)
-                                                animate={{ opacity: 1, y: 0 }}  // Animación al entrar (desplazamiento hacia arriba)
-                                                exit={{ opacity: 0, y: -50 }}  // Animación al salir (desplazamiento hacia abajo)
-                                                transition={{ duration: 0.5, ease: "easeInOut" }}  // Transición suave
-                                            >
-                                                <div className="col-start-1 col-end-2 text-center">
-                                                    <strong className={`${quicksand.className} block font-[900] text-5xl text-[#444]`}>{moment(item?.FechaInicio).utcOffset(-5).format('DD')}</strong>
-                                                    <span className={`${quicksand.className}font-sans font-[700] text-2xl text-[#444]`}>{moment(item?.FechaInicio).utcOffset(-5).format('MMM').toUpperCase()}</span>
-                                                </div>
-                                                <div className="col-start-2 col-end-6 max-h-[200px]">
-                                                    <div className="max-h-[200px] w-full">
-                                                        {item?.url ? (
-                                                            <Image width={250} height={200} className="h-[revert-layer] w-full object-fill" src={item.url} alt="imagenes1" />
-                                                        ) : (
-                                                            <div className="h-[200px] w-full bg-[#f2f2f2]" />
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="col-start-6 col-end-11">
-                                                    <h3 className={`${sans.className} ml-10 font-bold font-sans text-2xl text-[#444]`}>{item?.titulo}</h3>
-                                                    <h6 className={`${sans.className} ml-10 mt-4 font-[300] text-[14px] font-sans`}>{moment(item?.FechaInicio).utcOffset(-5).format('ddd')} {item?.HoraInicio} - {item?.HoraFinal}</h6>
-                                                    <h5 className={`${sans.className} ml-10 mt-1 font-[300] text-[14px] font-sans`}>{(item?.descripcion || item?.NombreLocal)?.replace(/\s*(S\/N|s\/n|\d+)$/i, '').trim()}</h5>
-                                                </div>
-                                                <div className="col-start-11 col-end-13 justify-end flex">
-                                                    <div className="mr-8">
-                                                        <span className="text-sm flex justify-end">Desde</span>
-                                                        <p className="mt-5 text-[#007FA4] text-2xl font-bold">{item?.Monto > 0 ? `S/ ${Number(item.Monto).toFixed(2)}` : "¡Gratis!"}</p>
-                                                        {/* <h6>Visto 21 veces</h6> */}
-                                                        <div className="flex justify-end items-center">
-                                                            <div onClick={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation();
-
-                                                                const shareUrl = `${window.location.origin}/evento/${item?.idEventos || item.ideventos}/${item?.idfecha}`;
-                                                                const shareData = {
-                                                                    title: item?.titulo || 'Evento en InjoyPlan',
-                                                                    text: `¡Mira este evento! ${item?.titulo || ''}`,
-                                                                    url: shareUrl
-                                                                };
-
-                                                                if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-                                                                    navigator.share(shareData).catch((err) => {
-                                                                        if (err.name !== 'AbortError') console.error('Error al compartir', err);
-                                                                    });
-                                                                } else {
-                                                                    navigator.clipboard.writeText(shareUrl).then(() => {
-                                                                        useAlertStore.getState().alert("Se ha copiado la url, compártelo con tus amigos :)", "notification");
-                                                                    }).catch(err => console.error('Error al copiar', err));
-                                                                }
-                                                            }}>
-                                                                <Image src={comp} width={26} height={26} alt="compartir" className="mr-2 top-1 relative" />
-                                                            </div>
-
-                                                            <div onClick={(e) => {
-                                                                e.preventDefault();
-                                                                e.stopPropagation(); // Evitar que el clic en el ícono de favorito navegue a la página del evento
-                                                                addFavoritesByUser(item);
-                                                            }}>
-                                                                {item?.favorito ? <div className='relative top-4'>
-                                                                    <Icon color='#037BA1' width={28} icon="mdi:heart" /><span className='text-[#037BA1] ml-3 font-bold text-md'></span>
-                                                                </div> :
-                                                                    <div className='relative top-4'>
-                                                                        <Image src={corp} alt="fav" width={24} /><span className='text-[#037BA1] ml-3 font-bold text-md'></span>
-                                                                    </div>}
+                    {
+                        !isLoading && (
+                            <div className="2xl:max-w-screen-2xl xl:max-w-screen-xl lg:max-w-screen-lg lg:px-4 h-18 py-5 mx-auto p-0 mt-3 xl:px-32">
+                                <div className="hidden md:block">
+                                    {
+                                        eventSearchByFilters?.map((item: any, index: number) => (
+                                            <div className="relative" key={`${item?.idEventos ?? item?.ideventos}-${item?.idfecha ?? item?.FechaInicio}-${index}`}>
+                                                <Link href={`/evento/${item?.idEventos ?? item?.ideventos}/${item?.idfecha}`} target="_blank" rel="noopener noreferrer">
+                                                    <motion.div {...({ className: "max-h-[200px] grid rounded-2xl items-center grid-cols-12 shadow-custom-2 mb-16 relative" }) as any}
+                                                        style={{ cursor: "pointer" }}
+                                                        layout
+                                                        initial={{ opacity: 0, y: 50 }}  // Animación inicial (fuera de la vista)
+                                                        animate={{ opacity: 1, y: 0 }}  // Animación al entrar (desplazamiento hacia arriba)
+                                                        exit={{ opacity: 0, y: -50 }}  // Animación al salir (desplazamiento hacia abajo)
+                                                        transition={{ duration: 0.5, ease: "easeInOut" }}  // Transición suave
+                                                    >
+                                                        <div className="col-start-1 col-end-2 text-center">
+                                                            <strong className={`${quicksand.className} block font-[900] text-5xl text-[#444]`}>{moment(item?.FechaInicio).utcOffset(-5).format('DD')}</strong>
+                                                            <span className={`${quicksand.className}font-sans font-[700] text-2xl text-[#444]`}>{moment(item?.FechaInicio).utcOffset(-5).format('MMM').toUpperCase()}</span>
+                                                        </div>
+                                                        <div className="col-start-2 col-end-6 max-h-[200px]">
+                                                            <div className="max-h-[200px] w-full">
+                                                                {item?.url ? (
+                                                                    <Image width={250} height={200} className="h-[revert-layer] w-full object-fill" src={item.url} alt="imagenes1" />
+                                                                ) : (
+                                                                    <div className="h-[200px] w-full bg-[#f2f2f2]" />
+                                                                )}
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </div>
+                                                        <div className="col-start-6 col-end-11">
+                                                            <h3 className={`${sans.className} ml-10 font-bold font-sans text-2xl text-[#444]`}>{item?.titulo}</h3>
+                                                            <h6 className={`${sans.className} ml-10 mt-4 font-[300] text-[14px] font-sans`}>{moment(item?.FechaInicio).utcOffset(-5).format('ddd')} {item?.HoraInicio} - {item?.HoraFinal}</h6>
+                                                            <h5 className={`${sans.className} ml-10 mt-1 font-[300] text-[14px] font-sans`}>{(item?.descripcion || item?.NombreLocal)?.replace(/\s*(S\/N|s\/n|\d+)$/i, '').trim()}</h5>
+                                                        </div>
+                                                        <div className="col-start-11 col-end-13 justify-end flex">
+                                                            <div className="mr-8">
+                                                                <span className="text-sm flex justify-end">Desde</span>
+                                                                <p className="mt-5 text-[#007FA4] text-2xl font-bold">{item?.Monto > 0 ? `S/ ${Number(item.Monto).toFixed(2)}` : "¡Gratis!"}</p>
+                                                                {/* <h6>Visto 21 veces</h6> */}
+                                                                <div className="flex justify-end items-center">
+                                                                    <div onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
 
-                                            </motion.div>
-                                        </Link>
+                                                                        const shareUrl = `${window.location.origin}/evento/${item?.idEventos || item.ideventos}/${item?.idfecha}`;
+                                                                        const shareData = {
+                                                                            title: item?.titulo || 'Evento en InjoyPlan',
+                                                                            text: `¡Mira este evento! ${item?.titulo || ''}`,
+                                                                            url: shareUrl
+                                                                        };
 
-                                        <Link className="font-[900] absolute bottom-[-30px] left-[110px] text-[#A3ABCC] text-xs flex items-center" target="_blank" href={item?.urlFuente?.startsWith('http') ? item.urlFuente : (item?.urlFuente ? `https://${item.urlFuente}` : '#')}>VER FUENTE <Image className="ml-2" src={flc} alt="flc" width={15} height={15} /></Link>
+                                                                        if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                                                                            navigator.share(shareData).catch((err) => {
+                                                                                if (err.name !== 'AbortError') console.error('Error al compartir', err);
+                                                                            });
+                                                                        } else {
+                                                                            navigator.clipboard.writeText(shareUrl).then(() => {
+                                                                                useAlertStore.getState().alert("Se ha copiado la url, compártelo con tus amigos :)", "notification");
+                                                                            }).catch(err => console.error('Error al copiar', err));
+                                                                        }
+                                                                    }}>
+                                                                        <Image src={comp} width={26} height={26} alt="compartir" className="mr-2 top-1 relative" />
+                                                                    </div>
+
+                                                                    <div onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation(); // Evitar que el clic en el ícono de favorito navegue a la página del evento
+                                                                        addFavoritesByUser(item);
+                                                                    }}>
+                                                                        {item?.favorito ? <div className='relative top-4'>
+                                                                            <Icon color='#037BA1' width={28} icon="mdi:heart" /><span className='text-[#037BA1] ml-3 font-bold text-md'></span>
+                                                                        </div> :
+                                                                            <div className='relative top-4'>
+                                                                                <Image src={corp} alt="fav" width={24} /><span className='text-[#037BA1] ml-3 font-bold text-md'></span>
+                                                                            </div>}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </motion.div>
+                                                </Link>
+
+                                                <Link className="font-[900] absolute bottom-[-30px] left-[110px] text-[#A3ABCC] text-xs flex items-center" target="_blank" href={item?.urlFuente?.startsWith('http') ? item.urlFuente : (item?.urlFuente ? `https://${item.urlFuente}` : '#')}>VER FUENTE <Image className="ml-2" src={flc} alt="flc" width={15} height={15} /></Link>
+                                            </div>
+                                        ))
+                                    }
+                                </div>
+
+                                <div className="block md:hidden px-8">
+                                    {
+                                        eventSearchByFilters?.map((item: any, index: number) => (
+                                            <Card item={item} height={450} key={`${item?.idEventos ?? item?.ideventos}-${item?.idfecha ?? item?.FechaInicio}-${index}`} addFavoritesByUser={addFavoritesByUser} />
+                                        ))
+                                    }
+                                </div>
+
+                                {/* View All Button - Only show after initial scrolling pages are exhausted */}
+                                {hasMore && page >= 3 && !isLoadingMore && (
+                                    <div className="flex justify-center mt-12 mb-20 text-center w-full">
+                                        <button
+                                            onClick={handleViewAll}
+                                            className="bg-[#007FA4] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#006b8a] transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto"
+                                        >
+                                            <span>Ver más planes</span>
+                                            <Icon icon="ei:plus" width={24} className="font-bold" />
+                                        </button>
                                     </div>
-                                ))
-                            }
-                        </div>
+                                )}
 
-                        <div className="block md:hidden px-8">
-                            {
-                                eventSearchByFilters?.map((item: any, index: number) => (
-                                    <Card item={item} height={450} key={`${item?.idEventos ?? item?.ideventos}-${item?.idfecha ?? item?.FechaInicio}-${index}`} addFavoritesByUser={addFavoritesByUser} />
-                                ))
-                            }
-                        </div>
-
-                        {/* View All Button - Only show after initial scrolling pages are exhausted */}
-                        {hasMore && page >= 3 && !isLoadingMore && (
-                            <div className="flex justify-center mt-12 mb-20 text-center w-full">
-                                <button
-                                    onClick={handleViewAll}
-                                    className="bg-[#007FA4] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#006b8a] transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto"
-                                >
-                                    <span>Ver más planes</span>
-                                    <Icon icon="ei:plus" width={24} className="font-bold" />
-                                </button>
+                                {/* Professional Loading Spinner */}
+                                {isLoadingMore && (
+                                    <div className="flex flex-col items-center justify-center mt-12 mb-20 w-full">
+                                        <Icon icon="svg-spinners:ring-resize" width={40} height={40} className="text-[#007FA4]" />
+                                        <p className="text-gray-400 text-sm mt-3 font-medium animate-pulse">Cargando planes...</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
-
-                        {/* Professional Loading Spinner */}
-                        {isLoadingMore && (
-                            <div className="flex flex-col items-center justify-center mt-12 mb-20 w-full">
-                                <Icon icon="svg-spinners:ring-resize" width={40} height={40} className="text-[#007FA4]" />
-                                <p className="text-gray-400 text-sm mt-3 font-medium animate-pulse">Cargando planes...</p>
-                            </div>
-                        )}
-                    </div>
+                        )
+                    }
                 </div>
             </>
         </div>
