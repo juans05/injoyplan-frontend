@@ -1276,7 +1276,9 @@ export default function AdminPage() {
                             department: data.department || undefined,
                             province: data.province || undefined,
                             district: data.district || undefined,
-                            address: data.address || undefined
+                            address: data.address || undefined,
+                            latitude: data.latitude ? Number(data.latitude) : undefined,
+                            longitude: data.longitude ? Number(data.longitude) : undefined
                         };
 
                         const isEdit = data.isEdit && data.eventId;
