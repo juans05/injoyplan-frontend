@@ -112,3 +112,9 @@
         top: 50px !important;
     }
 }
+
+@media screen and (max-width: 480px) {
+    .grid__form {
+        grid-template-columns: 1fr;
+    }
+}

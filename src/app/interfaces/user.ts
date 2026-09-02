@@ -13,6 +13,10 @@ export interface UserProfile {
   country?: string | null;
   gender?: string | null;
   birthDate?: string | null;
+  ruc?: string | null;
+  razonSocial?: string | null;
+  dni?: string | null;
+  fichaRucUrl?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

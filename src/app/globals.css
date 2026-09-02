@@ -189,6 +189,14 @@
   background: rgba(0, 0, 0, 0.1); /* Color del track */
 }
 
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
 @media (max-width: 600px) {
   #map-container {
     margin-bottom: 0;

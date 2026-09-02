@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Icon } from '@iconify/react';
 
@@ -16,8 +17,18 @@ export default function MisEventosPage() {
     const { auth, me } = useAuthStore();
     const { userEvents, getUserEvents, isLoading } = useProfileStore();
     const { deleteEvent } = useEventCreateStore();
+    const router = useRouter();
 
     const [openAuth, setOpenAuth] = useState(false);
+    const [showCompanyOnlyModal, setShowCompanyOnlyModal] = useState(false);
+
+    const handleCreateEventClick = () => {
+        if ((auth as any)?.userType === 'COMPANY') {
+            router.push('/perfil/crear-evento');
+        } else {
+            setShowCompanyOnlyModal(true);
+        }
+    };
 
     useEffect(() => {
         me();
@@ -73,13 +84,13 @@ export default function MisEventosPage() {
                             <h1 className="text-2xl md:text-3xl font-black text-[#212121]">Mis Eventos</h1>
                             <p className="text-[#666] mt-1">Eventos que has creado.</p>
                         </div>
-                        <Link
-                            href="/perfil/crear-evento"
+                        <button
+                            onClick={handleCreateEventClick}
                             className="bg-[#007FA4] text-white font-bold px-6 py-3 rounded-full hover:bg-[#006080] transition-colors flex items-center gap-2 w-fit"
                         >
                             <Icon icon="solar:calendar-add-bold" width={20} />
                             Crear Evento
-                        </Link>
+                        </button>
                     </div>
 
                     {/* Content */}
@@ -99,13 +110,13 @@ export default function MisEventosPage() {
                                 </div>
                                 <h2 className="text-xl font-black text-[#212121]">Aún no has creado eventos</h2>
                                 <p className="text-[#666] mt-2 mb-6">Comienza creando tu primer evento para verlo aquí.</p>
-                                <Link
-                                    href="/perfil/crear-evento"
+                                <button
+                                    onClick={handleCreateEventClick}
                                     className="inline-flex items-center gap-2 bg-[#007FA4] text-white font-bold px-6 py-3 rounded-full hover:bg-[#006080] transition-colors"
                                 >
                                     <Icon icon="solar:calendar-add-bold" width={20} />
                                     Crear mi primer evento
-                                </Link>
+                                </button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -186,6 +197,24 @@ export default function MisEventosPage() {
             </div>
 
             <Auth openAuth={openAuth} setOpenAuth={setOpenAuth} />
+
+            {showCompanyOnlyModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl p-6 text-center">
+                        <div className="w-16 h-16 bg-[#E0F2F7] text-[#007FA4] rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Icon icon="solar:buildings-bold" width={32} />
+                        </div>
+                        <h3 className="text-[#212121] text-xl font-bold mb-2">Solo empresas pueden crear eventos</h3>
+                        <p className="text-[#666] mb-6">Tu cuenta es de tipo persona natural. Regístrate como empresa para poder publicar eventos.</p>
+                        <button
+                            onClick={() => setShowCompanyOnlyModal(false)}
+                            className="px-8 py-3 rounded-full bg-[#007FA4] text-white font-bold hover:bg-[#006080] transition-colors"
+                        >
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

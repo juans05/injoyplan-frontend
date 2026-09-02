@@ -66,7 +66,7 @@ const Card = ({ item, addFavoritesByUser, height, heartDisabled, isDragging }: I
                         }
                         {item?.url ? (
                             <Image
-                                src={item.url}
+                                src={item.url.trim()}
                                 alt={item.titulo || "Evento"}
                                 width={400}
                                 height={400}

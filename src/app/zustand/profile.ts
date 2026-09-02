@@ -15,6 +15,12 @@ export interface ProfileUpdateDto {
   username?: string;
   email?: string;
   password?: string;
+  currentPassword?: string;
+  becomeCompany?: boolean;
+  ruc?: string;
+  razonSocial?: string;
+  dni?: string;
+  fichaRucUrl?: string;
 }
 
 export interface IProfileState {
@@ -31,6 +37,7 @@ export interface IProfileState {
   updateMyProfile: (dto: ProfileUpdateDto) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
   uploadCover: (file: File) => Promise<void>;
+  uploadCompanyDocument: (file: File) => Promise<string | null>;
 
   followUser: (userId: string) => Promise<boolean>;
   unfollowUser: (userId: string) => Promise<boolean>;
@@ -124,6 +131,11 @@ export const useProfileStore = create<IProfileState>((set, _get) => ({
       if (resp?.avatar) {
         await useAuthStore.getState().me();
         await _get().getMyProfile();
+      } else {
+        // postFormData/fetchData doesn't throw on non-2xx responses, it resolves with the
+        // error body — without this branch a failed upload (e.g. Cloudinary rejecting the
+        // request) silently no-ops with no feedback to the user.
+        set({ error: resp?.message || 'Error al subir avatar' });
       }
     } catch (e: any) {
       set({ error: e?.message || 'Error al subir avatar' });
@@ -141,9 +153,30 @@ export const useProfileStore = create<IProfileState>((set, _get) => ({
       if (resp?.coverImage) {
         await useAuthStore.getState().me();
         await _get().getMyProfile();
+      } else {
+        set({ error: resp?.message || 'Error al subir portada' });
       }
     } catch (e: any) {
       set({ error: e?.message || 'Error al subir portada' });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  uploadCompanyDocument: async (file: File) => {
+    try {
+      set({ isLoading: true, error: null });
+      const form = new FormData();
+      form.append('file', file);
+      const resp: any = await postFormData(`users/profile/company-document`, form);
+      if (resp?.fichaRucUrl) {
+        return resp.fichaRucUrl as string;
+      }
+      set({ error: resp?.message || 'Error al subir la ficha RUC' });
+      return null;
+    } catch (e: any) {
+      set({ error: e?.message || 'Error al subir la ficha RUC' });
+      return null;
     } finally {
       set({ isLoading: false });
     }

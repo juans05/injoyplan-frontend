@@ -73,7 +73,7 @@ const MoreFilters = ({ onApply }: Props) => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     // @ts-ignore
-                    className="absolute top-10 left-0 bg-white shadow-xl rounded-xl p-4 w-[300px] border border-gray-100"
+                    className="absolute top-10 left-0 bg-white shadow-xl rounded-xl p-4 w-[300px] max-w-[calc(100vw-2rem)] border border-gray-100"
                 >
                     {/* Time Filter */}
                     <div className="mb-4 bg-gray-50 p-3 rounded-lg">

@@ -40,6 +40,7 @@ const Header = () => {
     const [isOpenFavorite, setIsOpenFavorite, refFavorite] = useOutsideClick(false);
     const [isUserDropdownOpen, setIsUserDropdownOpen, refUserDropdown] = useOutsideClick(false);
     const [openAuth, setOpenAuth] = useState<boolean>(false);
+    const [authRegisterMode, setAuthRegisterMode] = useState<boolean>(false);
     const navigation = useRouter()
     const path = usePathname();
     const [token, setToken] = useState<string | null>(null);
@@ -47,6 +48,15 @@ const Header = () => {
     useEffect(() => {
         getFavorites();
     }, [])
+
+    // Landed here from a friend-invite link (email/WhatsApp) -> open registration directly
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        if (new URLSearchParams(window.location.search).get('invite') === '1' && !auth) {
+            setAuthRegisterMode(true);
+            setOpenAuth(true);
+        }
+    }, [auth])
 
     const [search, setSearch] = useState<string>("");
     const [hoveredFavoriteId, setHoveredFavoriteId] = useState<number | null>(null);
@@ -130,7 +140,7 @@ const Header = () => {
         navigation.push(`/evento/${item?.ideventos}/${item.idfecha}`)
     }
 
-    const isMobile = useIsMobile();
+    const isMobile = useIsMobile(767); // aligned with Tailwind's md: breakpoint used alongside it below
 
     function HighlightedText({ text, highlight }: { text: string; highlight: string }) {
         if (!highlight) {
@@ -187,18 +197,18 @@ const Header = () => {
 
     return (
         <div className="border-b border-solid border-[#EDEFF5] bg-[#F9FAFC]">
-            <Auth openAuth={openAuth} setOpenAuth={setOpenAuth} />
+            <Auth openAuth={openAuth} setOpenAuth={setOpenAuth} isRegister={authRegisterMode} setIsRegister={setAuthRegisterMode} />
             <div className="2xl:max-w-screen-2xl xl:max-w-screen-xl xl:px-10 max-w-[998px] h-18 py-3 px-3 mx-auto items-center grid grid-cols-12">
                 <Link prefetch={true} className='w-32 md:w-48 col-span-4 md:col-span-3' href="/"><Image src={logo} alt="logo" className='w-full' height={400} width={300} /></Link>
                 {
                     !path.startsWith("/busqueda") && (
                         <div className={
                             isMobile ?
-                                styles.search_containerMobile : "hidden relative border col-start-4 col-end-9 w-full col-span-5 md:flex items-center border-1 border-solid border-[#e8e8e8] rounded-[50px] bg-white"}>
+                                "relative w-full" : "hidden relative border col-start-4 col-end-9 w-full col-span-5 md:flex items-center border-1 border-solid border-[#e8e8e8] rounded-[50px] bg-white"}>
                             <div className="flex justify-center pr-2 pl-4">
                                 <Image src={lupa} width={28} onClick={() => setIsOpenEvent(true)} alt="lupa" className="hidden md:block" />
                             </div>
-                            <div className={styles.search + 'relative w-full rounded-2xl'} ref={searchRef}>
+                            <div className="relative w-full rounded-2xl" ref={searchRef}>
                                 {
                                     !isMobile &&
                                     <input
@@ -467,7 +477,7 @@ const Header = () => {
 
                             {/* Dropdown Menu */}
                             {isUserDropdownOpen && (
-                                <div className="absolute right-[-90px] top-14 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fadeIn">
+                                <div className="absolute right-0 md:right-[-90px] top-14 w-56 max-w-[calc(100vw-1.5rem)] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fadeIn">
                                     {/* <div className="px-4 py-3 border-b border-gray-100">
                                                 <p className="font-bold text-[#212121] text-sm truncate">
                                                     {(() => {
@@ -483,6 +493,10 @@ const Header = () => {
                                     <Link onClick={() => setIsUserDropdownOpen(false)} href="/explorar" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
                                         <Icon icon="solar:compass-bold" className="text-[#007FA4]" width={20} />
                                         <span className="text-[#212121] text-sm">Explorar</span>
+                                    </Link>
+                                    <Link onClick={() => setIsUserDropdownOpen(false)} href="/amigos" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                                        <Icon icon="solar:users-group-rounded-bold" className="text-[#007FA4]" width={20} />
+                                        <span className="text-[#212121] text-sm">Amigos</span>
                                     </Link>
 
                                     {/* My Events - Only for COMPANY type */}
@@ -553,16 +567,16 @@ const Header = () => {
 
 
                     {/* Login Button (Not Authenticated) */}
-                    {/* {auth === null && !isMobile && path !== "/nosotros" && path !== "/preguntas-frecuentes" && path !== "/terminos-y-condiciones" && path !== "/contactanos" && (
+                    {auth === null && !isMobile && path !== "/nosotros" && path !== "/preguntas-frecuentes" && path !== "/terminos-y-condiciones" && path !== "/contactanos" && (
                         <button onClick={() => setOpenAuth(true)}
                             className='text-white bg-[#007FA4] text-[15px] py-[10px] px-[25px] rounded-[20px] font-open-sans cursor-pointer'
                         >Ingresar</button>
-                    )} */}
-                    {/* {auth === null && isMobile && path !== "/nosotros" && path !== "/preguntas-frecuentes" && path !== "/terminos-y-condiciones" && path !== "/contactanos" && (
+                    )}
+                    {auth === null && isMobile && path !== "/nosotros" && path !== "/preguntas-frecuentes" && path !== "/terminos-y-condiciones" && path !== "/contactanos" && (
                         <button onClick={() => setOpenAuth(true)}
                             className='text-white bg-[#007FA4] text-[15px] p-2 rounded-[20px] font-open-sans cursor-pointer'
                         ><Icon icon="solar:user-bold" width="10" height="10" /></button>
-                    )} */}
+                    )}
 
                     {/* Explore Icon (Desktop & Mobile) */}
                     {/* <Link

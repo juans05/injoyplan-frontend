@@ -25,7 +25,9 @@
 
 .loading__wrapper p {
     font-weight: 600;
-    width: 360px;
+    max-width: 360px;
+    padding: 0 16px;
+    margin: 0 auto;
 }
 
 

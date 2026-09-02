@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import ReactModal from 'react-modal';
 import { Icon } from '@iconify/react';
 import { useAuthStore } from '@/app/zustand/auth';
@@ -74,6 +75,15 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
     const isRegister = isRegisterProp ?? localIsRegister;
     const setIsRegister = setIsRegisterProp ?? setLocalIsRegister;
     const { login, signIn, verifyCode, forgotPassword } = useAuthStore();
+    const router = useRouter();
+
+    const handleCompleteProfile = async () => {
+        setOpenAuth(false);
+        if (useAuthStore.getState().auth) {
+            await useFavoriteStore.getState().getFavorites();
+        }
+        router.push('/perfil/editar');
+    };
 
     // Internal state
     const [step, setStep] = useState(0); // 0: Form, 1: Verify, 2: Success
@@ -772,7 +782,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
 
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-gray-500 uppercase block">Ingresa el código</label>
-                                        <div className="flex gap-2 justify-between">
+                                        <div className="flex gap-2">
                                             {otp.map((digit, idx) => (
                                                 <input
                                                     key={idx}
@@ -785,7 +795,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                                                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                                                     onPaste={handleOtpPaste}
-                                                    className="w-12 h-12 border border-gray-300 rounded-lg text-center text-xl font-bold focus:outline-none focus:border-[#007FA4] focus:ring-1 focus:ring-[#007FA4] transition-all"
+                                                    className="flex-1 min-w-0 max-w-[48px] h-12 border border-gray-300 rounded-lg text-center text-xl font-bold focus:outline-none focus:border-[#007FA4] focus:ring-1 focus:ring-[#007FA4] transition-all"
                                                 />
                                             ))}
                                         </div>
@@ -831,8 +841,14 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
 
                                     <div className="space-y-4 max-w-xs mx-auto relative z-10">
                                         <button
-                                            onClick={() => setStep(3)} // Go to Interests Step
+                                            onClick={handleCompleteProfile}
                                             className="w-full bg-[#277FA4] hover:bg-[#00c9bd] text-[#fff] font-bold py-3.5 rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-95 text-sm"
+                                        >
+                                            Completar mi perfil
+                                        </button>
+                                        <button
+                                            onClick={() => setStep(3)} // Go to Interests Step
+                                            className="w-full text-[#007FA4] font-bold py-2 hover:underline text-sm"
                                         >
                                             Seleccionar mis gustos
                                         </button>
@@ -844,7 +860,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                     await useFavoriteStore.getState().getFavorites();
                                                 }
                                             }}
-                                            className="w-full text-[#007FA4] font-bold py-2 hover:underline text-sm"
+                                            className="w-full text-gray-400 font-bold py-1 hover:underline text-xs"
                                         >
                                             Explorar eventos
                                         </button>

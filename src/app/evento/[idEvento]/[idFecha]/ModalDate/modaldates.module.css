@@ -79,7 +79,7 @@
 }
 
 .date__table {
-    height: 500px !important;
+    max-height: min(500px, 70vh);
     overflow: auto;
 }
 

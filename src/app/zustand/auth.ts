@@ -33,7 +33,7 @@ export const useAuthStore = create<IAuthState>((set, _get) => ({
                 return { success: true };
             } else {
                 set({ auth: null })
-                return { success: false, message: "La contraseña o el usuario son incorrectos" };
+                return { success: false, message: resp?.message || "La contraseña o el usuario son incorrectos" };
             }
         } catch (error: any) {
             return { success: false, message: error?.message || "El usuario o contraseña son incorrectas" };

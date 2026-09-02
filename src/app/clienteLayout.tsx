@@ -57,7 +57,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
         checkModalClass();
         const observer = new MutationObserver(checkModalClass);
-        observer.observe(document.body, { childList: true, subtree: true });
+        // react-modal toggles ReactModal__Body--open by mutating body's class attribute directly,
+        // not by adding/removing child nodes — attributes must be observed or the class removal
+        // (e.g. on login success closing the Auth modal) can be missed, leaving the blur stuck on.
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
 
         return () => observer.disconnect();
     }, []);
