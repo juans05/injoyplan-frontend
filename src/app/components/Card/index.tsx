@@ -1,13 +1,12 @@
-import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import heartOutline from '../../../../public/svg/favorite.svg'
-import heart from '../../../../public/svg/shape.svg'
-import Angle from '../../../../public/svg/angle_right.svg'
-import moment from "moment";
-import { Event } from "@/app/interfaces/event";
-
+import { Icon } from "@iconify/react";
 import { useRef, useEffect } from "react";
+import dayjs from '@/app/utils/date';
+import { Event } from "@/app/interfaces/event";
+import { track } from "@/app/utils/analytics";
+import { shareEvent } from "@/app/utils/share";
+import { eventPath } from '@/app/utils/urls';
 
 interface IProps {
     item: Event
@@ -15,108 +14,143 @@ interface IProps {
     addFavoritesByUser: (event: Event) => void
     heartDisabled?: boolean
     isDragging?: boolean
+    // Larger layout for the lead card of a section
+    featured?: boolean
 }
 
-const Card = ({ item, addFavoritesByUser, height, heartDisabled, isDragging }: IProps) => {
+export const isFavorite = (item: Event) => Boolean(item?.favorito) || item?.esfavorito === 1;
 
+export const eventHref = (item: Event) => eventPath(item?.idEventos || item?.ideventos, item?.titulo, item?.idfecha);
+
+export const formatPrice = (monto?: number | string) =>
+    Number(monto) > 0 ? `S/ ${Number(monto).toFixed(2)}` : 'Gratis';
+
+// Trailing street numbers / "S/N" are noise in a card
+const venueName = (name?: string) => name?.replace(/\s*(S\/N|s\/n|\d+)$/i, '').trim();
+
+const sourceHref = (url?: string) => (url ? (url.startsWith('http') ? url : `https://${url}`) : '');
+
+const Card = ({ item, addFavoritesByUser, heartDisabled, isDragging, featured }: IProps) => {
     const wasDraggingRef = useRef(false);
 
+    // Carousels: a drag must not count as a click on the card
     useEffect(() => {
         if (isDragging) {
             wasDraggingRef.current = true;
         } else if (wasDraggingRef.current) {
-            // Small delay to prevent navigation immediately after drag
-            const timer = setTimeout(() => {
-                wasDraggingRef.current = false;
-            }, 100);
+            const timer = setTimeout(() => { wasDraggingRef.current = false; }, 100);
             return () => clearTimeout(timer);
         }
     }, [isDragging]);
 
+    const date = item?.FechaInicio ? dayjs(item.FechaInicio).utcOffset(-5) : null;
+    const saved = isFavorite(item);
+    const time = [item?.HoraInicio, item?.HoraFinal].filter(Boolean).join(' – ');
+    const source = sourceHref(item?.urlFuente);
+
+    const toggleFavorite = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!saved) track('add_to_favorites', { event_id: item?.idEventos || item?.ideventos });
+        addFavoritesByUser(item);
+    };
+
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-            {...({ className: `flex flex-col h-[28rem] md:h-[28rem] justify-between w-full mb-10 md:mb-5` }) as any}
-        >
+        <article className="group relative flex h-full w-full flex-col">
             <Link
-                prefetch={true}
+                href={eventHref(item)}
                 onClick={(e) => {
                     if (isDragging || wasDraggingRef.current) {
                         e.preventDefault();
                         e.stopPropagation();
-                        return;
                     }
-
                 }}
-                href={`/evento/${item?.idEventos || item.ideventos}/${item?.idfecha}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className='h-full w-full relative'>
-                <div className={heartDisabled ? "bg-[#fff] h-full w-full rounded-t-2xl rounded-b-2xl border border-solid] shadow-custom-2 pb-5" : "bg-[#fff] h-full w-full rounded-t-2xl rounded-b-2xl border border-solid] shadow-custom-2 group pb-5"}>
-
-                    <div className='w-full h-56 relative rounded-t-2xl'>
-                        {
-                            item?.Destacado === 1 && (
-                                <div className="uppercase absolute p-1 px-4 left-3 bottom-[-12px] bg-[#007FA4] rounded-full text-sm text-[#fff] font-bold">
-                                    <p>Destacado</p>
-                                </div>
-                            )
-                        }
-                        {item?.url ? (
-                            <Image
-                                src={item.url.trim()}
-                                alt={item.titulo || "Evento"}
-                                width={400}
-                                height={400}
-                                className='h-full w-full object-fill rounded-t-2xl'
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            />
-                        ) : (
-                            <div className='h-full w-full bg-[#f2f2f2] rounded-t-2xl' />
-                        )}
-                        <div onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            addFavoritesByUser(item);
-                        }}
-                        >
-
-                            <Image
-                                width={30}
-                                height={30}
-                                className={`absolute right-3 bg-[rgba(255,255,255,0.8)] rounded-full top-3 p-1 
-               opacity-100 md:opacity-0 ${(item?.favorito || item?.esfavorito === 1) ? "md:opacity-100" : "md:opacity-0 md:group-hover:opacity-100"}  
-               transition-opacity duration-300 cursor-pointer`}
-                                src={(item?.favorito || item?.esfavorito === 1) ? heart : heartOutline} alt="" />
+                className="flex h-full flex-col rounded-card focus-visible:ring-offset-4"
+            >
+                <div className={`relative w-full overflow-hidden rounded-card bg-brand-mist ${featured ? 'aspect-[4/3] md:aspect-[16/10] lg:aspect-auto lg:min-h-[320px] lg:flex-1' : 'aspect-[4/3]'}`}>
+                    {item?.url ? (
+                        <Image
+                            src={item.url.trim()}
+                            alt={item.titulo || 'Evento'}
+                            fill
+                            sizes={featured ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw'}
+                            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        />
+                    ) : (
+                        // No photo from the organizer: neutral brand placeholder, never a stock image
+                        <div className="flex h-full w-full items-center justify-center text-brand/40">
+                            <Icon icon="solar:ticket-linear" width={48} aria-hidden />
                         </div>
+                    )}
 
-                    </div>
-                    <div className='p-4 bg-[#fff] rounded-bl-2xl rounded-br-2xl'>
-                        <div>
-                            <span className='text-xs font-bold text-[#4a4a4a]'>{moment(item?.FechaInicio).utcOffset(-5).format('D MMM').toUpperCase()} - {item?.HoraInicio} {item?.HoraFinal === "" ? "" : `-${item?.HoraFinal}`}</span>
-                            <h3 className='font-black text-xl line-clamp-2 text-[#212121]'>{item?.titulo}</h3>
-                            <h5 className='text-sm font-normal mb-3 text-[#212121] mt-2'>{item?.NombreLocal?.replace(/\s*(S\/N|s\/n|\d+)$/i, '').trim()}</h5>
+                    {/* Ticket stub: the date is the first thing people scan for */}
+                    {date && (
+                        <div className="absolute bottom-3 left-3 flex min-w-[52px] flex-col items-center rounded-control bg-white px-2.5 py-1.5 text-center leading-none">
+                            <span className="text-[1.375rem] font-extrabold text-ink">{date.format('D')}</span>
+                            <span className="mt-0.5 text-caption font-semibold text-brand">{date.format('MMM')}</span>
                         </div>
-                        <div className="absolute bottom-[20px] z-100">
-                            <strong className='text-[10px] font-bold uppercase text-[#212121]'>Desde</strong>
-                            <h4 className='font-bold text-xl text-[#212121]'>{Number(item?.Monto) > 0 ? `S/ ${item?.Monto.toFixed(2)}` : "¡Gratis!"}</h4>
-                        </div>
-                    </div>
+                    )}
+
+                    {item?.Destacado === 1 && (
+                        <span className="absolute left-3 top-3 rounded-full bg-brand px-2.5 py-1 text-caption font-semibold text-white">
+                            Destacado
+                        </span>
+                    )}
+                </div>
+
+                <div className={`flex flex-col pt-3 ${featured ? 'lg:flex-none' : 'flex-1'}`}>
+                    <p className="text-caption font-medium text-ink-soft">
+                        {date ? date.format('dddd') : ''}{time ? `, ${time}` : ''}
+                    </p>
+                    <h3 className={`mt-1 line-clamp-2 font-bold text-ink transition-colors group-hover:text-brand ${featured ? 'text-xl md:text-2xl' : 'text-h3'}`}>
+                        {item?.titulo}
+                    </h3>
+                    {venueName(item?.NombreLocal) && (
+                        <p className="mt-1.5 flex items-center gap-1 text-label font-medium text-ink-soft">
+                            <Icon icon="solar:map-point-linear" width={16} className="shrink-0 text-brand-gray" aria-hidden />
+                            <span className="truncate">{venueName(item?.NombreLocal)}</span>
+                        </p>
+                    )}
+                    <p className="mt-auto pt-3 text-body font-bold text-ink">
+                        {Number(item?.Monto) > 0 && <span className="mr-1 text-caption font-medium text-ink-soft">Desde</span>}
+                        {formatPrice(item?.Monto)}
+                    </p>
                 </div>
             </Link>
-            <Link className='flex w-fit text-[11px] mt-1 text-[#A3ABCC] font-bold relative -top-0 md:-top-0 left-4'
-                href={item?.urlFuente?.startsWith('http') ? item.urlFuente : (item?.urlFuente ? `https://${item.urlFuente}` : '#')}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => !item?.urlFuente && e.preventDefault()}
+
+            {!heartDisabled && (
+                <button
+                    type="button"
+                    onClick={toggleFavorite}
+                    aria-pressed={saved}
+                    aria-label={saved ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                    className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink backdrop-blur transition-colors hover:text-brand-wine"
+                >
+                    <Icon icon={saved ? 'solar:heart-bold' : 'solar:heart-linear'} width={20} className={saved ? 'text-brand-wine' : ''} />
+                </button>
+            )}
+
+            <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); shareEvent(eventHref(item), item?.titulo); }}
+                aria-label="Compartir evento"
+                className={`absolute right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink backdrop-blur transition-colors hover:text-brand ${heartDisabled ? 'top-3' : 'top-14'}`}
             >
-                VER FUENTE
-                <Image className='ml-1' src={Angle} height={10} width={10} alt='Angulo' />
-            </Link>
-        </motion.div >
-    )
+                <Icon icon="solar:share-linear" width={19} />
+            </button>
+
+            {source && (
+                <a
+                    href={source}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 w-fit text-caption font-medium text-brand-gray hover:text-brand"
+                >
+                    Ver fuente original
+                </a>
+            )}
+        </article>
+    );
 }
 
 export default Card;

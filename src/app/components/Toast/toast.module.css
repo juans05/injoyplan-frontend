@@ -3,7 +3,7 @@
 .wrapper__toast {
    position: fixed;
    right: 30px;
-   font-family: 'Quicksand' !important;
+   font-family: inherit;
    width: 400px;
    top: 20px;
    z-index: 999999;
@@ -82,7 +82,7 @@
    margin-top: 4px;
    color: rgb(69, 67, 67);
    font-size: 12px;
-   font-family: 'Quicksand';
+   font-family: inherit;
    font-weight: 4a00;
    font-style: bold;
 }
@@ -96,7 +96,7 @@
 .header__toast h6 {
    font-size: 16px;
    font-weight: 800;
-   font-family: 'Quicksand';
+   font-family: inherit;
 }
 
 @media screen and (max-width: 768px) {

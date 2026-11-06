@@ -23,7 +23,7 @@ const Map = ({ location }: any) => {
         }
 
         if (mapContainerRef.current) {
-            mapboxgl.accessToken = 'pk.eyJ1IjoiZGV2Y29kZXgiLCJhIjoiY20xaDRoN2c2MDA4aDJtb2I3bW85dmk1aSJ9.rCfKcWomIv7qTwNwKyniAA'
+            mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
             mapRef.current = new mapboxgl.Map({
                 container: mapContainerRef.current,
                 center: [lng, lat],

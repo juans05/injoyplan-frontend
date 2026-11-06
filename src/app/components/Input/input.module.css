@@ -12,7 +12,7 @@
   padding: 14px 40px 14px 40px;
   outline: none;
   border-radius: 20px;
-  font-family: 'Quicksand';
+  font-family: inherit;
   background: #F6F6F6;
   border: none;
   width: 300px;
@@ -37,7 +37,7 @@
   width: 100%;
   color: #5E6278;
   font-size: 11px;
-  font-family: 'Manrope';
+  font-family: inherit;
   position: relative;
   transition: 0.1s;
   height: 38px;
@@ -76,7 +76,7 @@
   padding: 10px;
   text-align: left;
   font-weight: 600;
-  font-family: Inter;
+  font-family: inherit;
   border: 1px solid #CACACA;
   margin-bottom: 1rem;
   outline: none;
@@ -114,7 +114,7 @@
   background-size: 14px 14px;
   border-bottom: 2px solid rgba(157, 163, 170, 0.2) !important;
   padding: .5em 1em .5em 3em !important;
-  font-family: 'Manrope', sans-serif;
+  font-family: inherit;
   font-style: normal;
   font-weight: 400;
   font-size: 14px;
@@ -193,7 +193,7 @@
 
 
 .wrapperPercentage>span {
-  font-family: Inter;
+  font-family: inherit;
   color: #5e6278;
   font-size: 10px;
   width: 50%;

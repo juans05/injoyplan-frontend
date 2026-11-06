@@ -1,80 +1,56 @@
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { IEventsState, useEventStore } from '../../zustand/events'
-import { IAuthState, useAuthStore } from '../../zustand/auth'
-import { IFavoriteState, useFavoriteStore } from '../../zustand/favorites'
+"use client";
+import { Dispatch, SetStateAction, useState } from 'react'
+import Link from 'next/link'
+import { useEventStore } from '../../zustand/events'
+import { toggleFavorite } from '../../zustand/favorites'
 import Card from '@/app/components/Card'
 import CardSkeleton from '@/app/components/CardSkeleton'
-import { Event } from '@/app/interfaces/event'
+import SectionHeader from '../Home/SectionHeader'
 
-const Events = ({ setPage, setOpenAuth }: any) => {
-    const router = useRouter();
-    const [clickCount, setClickCount] = useState(0);
+// After a few "load more" clicks we hand off to the full search page with filters
+const MAX_INLINE_PAGES = 3;
 
-    const { events, isLoading }: IEventsState = useEventStore();
-    const { auth }: IAuthState = useAuthStore();
-    const { addFavorite, deleteFavorite }: IFavoriteState = useFavoriteStore();
+const Events = ({ setPage }: { setPage: Dispatch<SetStateAction<number>> }) => {
+    const { events, isLoading } = useEventStore();
+    const [pagesLoaded, setPagesLoaded] = useState(1);
 
-    const addFavoritesByUser = (item: any) => {
-        if (item.favorito || item.esfavorito === 1) {
-            deleteFavorite(item)
-        } else {
-            addFavorite(item)
-        }
-    }
-
-    const handleLoadMore = () => {
-        if (clickCount >= 2) {
-            router.push('/busqueda/0');
-        } else {
-            setClickCount(prev => prev + 1);
-            setPage((prevPage: any) => prevPage + 1);
-        }
+    const loadMore = () => {
+        setPagesLoaded((p) => p + 1);
+        setPage((p) => p + 1);
     };
 
     return (
-        <div className='bg-[#fff]'>
+        <section className="section" aria-labelledby="foryou-title">
+            <div className="container-page">
+                <SectionHeader id="foryou-title" title="Más planes para ti" link={{ href: '/eventos', label: 'Buscar con filtros' }} />
 
-            <div className="2xl:max-w-screen-2xl xl:max-w-screen-xl max-w-[980px] mx-auto mt-6 xl:px-10 px-5">
-                <div className="md:px-0">
-                    <div className='md:pt-16 pt-6'>
-                        <h2 className='text-3xl mb-8 font-bold text-[#444444] md:text-[#212121]'>Eventos para ti</h2>
+                {!isLoading && events.length === 0 ? (
+                    <div className="surface p-8 text-center">
+                        <p className="text-body font-semibold text-ink">No hay eventos publicados en este momento</p>
+                        <p className="mt-1 text-label font-normal text-ink-soft">Vuelve pronto o revisa los eventos destacados.</p>
                     </div>
-                    <div className="grid auto-cols-min grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {
-                            isLoading && events.length === 0 ? (
-                                // Show skeletons on initial load (or if cache empty)
-                                Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)
-                            ) : events.length === 0 ? (
-                                // No events
-                                <div className="col-span-full text-center py-10 text-gray-500">No hay eventos disponibles.</div>
-                            ) : (
-                                events.map((item: Event, index: number) => {
-                                    return (
-                                        <Card item={item} key={`${item?.idEventos || item?.ideventos}-${item?.idfecha}`} addFavoritesByUser={addFavoritesByUser} />
-                                    )
-                                })
-                            )
-                        }
-                    </div>
-                    {/* Append Skeletons when loading more data (if we want that effect, but store clears events currently so skeletons replace list. 
-                        Ideally we append skeletons to list. But current logic replaces array. Keep it simple: Skeletons show when loading. 
-                    */}
-                    {isLoading && events.length > 0 && (
-                        // If we are loading MORE events effectively
-                        <div className="grid auto-cols-min grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-5">
-                            {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={`skeleton-append-${i}`} />)}
-                        </div>
-                    )}
+                ) : (
+                    <ul className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {events.map((item) => (
+                            <li key={`${item.idEventos}-${item.idfecha}`}><Card item={item} addFavoritesByUser={toggleFavorite} /></li>
+                        ))}
+                        {isLoading && Array.from({ length: 4 }).map((_, i) => <li key={`sk-${i}`}><CardSkeleton /></li>)}
+                    </ul>
+                )}
 
-                    <div className='text-[#007fa4] font-bold flex justify-center mt-10 mb-10 border-2 border-solid border-[#007FA4] p-2 w-fit mx-auto rounded-full px-16'>
-                        <button onClick={handleLoadMore} disabled={isLoading} type="submit">
-                            {isLoading ? 'CARGANDO...' : clickCount >= 2 ? 'IR AL BUSCADOR' : 'VER MÁS PLANES'}
-                        </button>
+                {events.length > 0 && (
+                    <div className="mt-12 flex justify-center">
+                        {pagesLoaded >= MAX_INLINE_PAGES ? (
+                            <Link href="/eventos" className="btn-secondary btn-lg">Ver todos con filtros</Link>
+                        ) : (
+                            <button type="button" onClick={loadMore} disabled={isLoading} className="btn-secondary btn-lg">
+                                {isLoading ? 'Cargando…' : 'Ver más planes'}
+                            </button>
+                        )}
                     </div>
-                </div>
+                )}
             </div>
-        </div>
+        </section>
     )
 }
 

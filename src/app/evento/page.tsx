@@ -1,9 +1,7 @@
-const Event = () => {
-    return (
-        <div>
-            Aqui estara el evento
-        </div>
-    )
-}
+import { permanentRedirect } from 'next/navigation';
+import { searchPath } from '@/app/utils/urls';
 
-export default Event;
+// /evento has no content of its own
+export default function EventoIndex() {
+  permanentRedirect(searchPath());
+}

@@ -81,7 +81,7 @@ function MessagesContent({ openAuth, setOpenAuth }: { openAuth: boolean, setOpen
   const [draft, setDraft] = useState('');
   const [openNewChat, setOpenNewChat] = useState(false);
 
-  const currentUserId = (auth as any)?.id as string | undefined;
+  const currentUserId = auth?.id as string | undefined;
 
   const searchParams = useSearchParams();
   const chatWithUser = searchParams.get('chatWith');
@@ -185,7 +185,7 @@ function MessagesContent({ openAuth, setOpenAuth }: { openAuth: boolean, setOpen
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFC] border-b border-[#F7F7F7] text-left"
                     >
                       <div className="w-10 h-10 rounded-full overflow-hidden border border-solid border-[#EDEFF5] bg-[#F7F7F7]">
-                        <img src={getAvatar(u)} alt={getDisplayName(u)} className="w-full h-full object-cover" />
+                        <img loading="lazy" src={getAvatar(u)} alt={getDisplayName(u)} className="w-full h-full object-cover" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-[#212121] text-sm truncate">{getDisplayName(u)}</p>
@@ -223,7 +223,7 @@ function MessagesContent({ openAuth, setOpenAuth }: { openAuth: boolean, setOpen
                     className={`w-full p-4 flex items-center gap-3 text-left cursor-pointer hover:bg-[#F9FAFC] transition-colors border-b border-[#F7F7F7] ${activeRoomId === room.id ? 'bg-[#F0F7FA]' : ''}`}
                   >
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-[#F7F7F7] border border-[#EDEFF5]">
-                      <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                      <img loading="lazy" src={avatar} alt={name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center mb-1">
@@ -257,7 +257,7 @@ function MessagesContent({ openAuth, setOpenAuth }: { openAuth: boolean, setOpen
                   </button>
 
                   <div className="w-10 h-10 rounded-full overflow-hidden bg-[#F7F7F7] border border-[#EDEFF5]">
-                    <img src={getAvatar(activeOtherUser)} alt="Chat" className="w-full h-full object-cover" />
+                    <img loading="lazy" src={getAvatar(activeOtherUser)} alt="Chat" className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <h2 className="font-black text-[#212121] text-sm md:text-base">

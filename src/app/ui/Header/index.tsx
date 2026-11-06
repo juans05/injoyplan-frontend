@@ -1,786 +1,469 @@
 "use client";
-import styles from './header.module.css'
-import logo from '../../../../public/svg/injoyplan.svg'
-import lupa from '../../../../public/svg/search.svg'
-import lupaMobile from '../../../../public/svg/searchmobile.svg'
-import fb from '../../../../public/svg/fb.svg'
-import ig from '../../../../public/svg/ig.svg'
-import cora from '../../../../public/svg/favorite.svg'
-import heartWhite from '../../../../public/svg/favoritepick.svg'
 import Link from 'next/link'
-import calendar from '../../../../public/svg/calendar.svg'
-import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
-import { IAuthState, useAuthStore } from '../../zustand/auth'
-import { IEventsState, useEventStore } from '../../zustand/events'
-import { IFavoriteState, useFavoriteStore } from '../../zustand/favorites'
-import { Icon } from '@iconify/react/dist/iconify.js'
-import moment from 'moment'
 import Image from 'next/image';
+import { useRouter, usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { Icon } from '@iconify/react'
+import logo from '../../../../public/svg/injoyplan.svg'
+import { useAuthStore } from '../../zustand/auth'
+import { useEventStore } from '../../zustand/events'
+import { useFavoriteStore } from '../../zustand/favorites'
+import { useCategoriesState } from '../../zustand/categories'
+import dayjs from '@/app/utils/date';
 import Auth from '../Auth';
 import useOutsideClick from '@/app/hooks/useOutsideClick';
-import useIsMobile from '@/app/hooks/useIsMobile';
-import { usePathname } from 'next/navigation'
-import { quicksand, sans } from '../../../../public/fonts';
-import 'moment/locale/es'; // Importa el idioma español
-import ReactModal from 'react-modal';
 import useDebounce from '@/app/hooks/useDebounce';
+import usePublishEvent from '@/app/hooks/usePublishEvent';
 import { getProfileAssets } from '@/app/utils/profileAssets';
+import { track } from '@/app/utils/analytics';
+import { eventPath, searchPath } from '@/app/utils/urls';
 
+const RECENT_KEY = 'recentSearches';
 
-moment.locale('es');
+const readRecent = (): string[] => {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch { return []; }
+};
 
-const Header = () => {
+const shortDate = (value?: string) =>
+    value ? dayjs(value).utcOffset(-5).format('ddd D MMM').replace('.', '') : '';
 
+/* ---------- Search ---------- */
 
-    const { auth, me, logout }: IAuthState = useAuthStore();
-    const { getEventBySearch, eventSearch, resetEventBySearch, events, getValueSearch }: IEventsState = useEventStore();
-    const { getFavorites, deleteFavorite, favorites }: IFavoriteState = useFavoriteStore();
-    const [isOpenEvent, setIsOpenEvent, refEvent] = useOutsideClick(false);
-    const [isOpenFavorite, setIsOpenFavorite, refFavorite] = useOutsideClick(false);
-    const [isUserDropdownOpen, setIsUserDropdownOpen, refUserDropdown] = useOutsideClick(false);
-    const [openAuth, setOpenAuth] = useState<boolean>(false);
-    const [authRegisterMode, setAuthRegisterMode] = useState<boolean>(false);
-    const navigation = useRouter()
-    const path = usePathname();
-    const [token, setToken] = useState<string | null>(null);
+// Results panel shared by the desktop dropdown and the mobile full-screen search
+function SearchResults({ term, onPick }: { term: string; onPick: (term: string) => void }) {
+    const { eventSearch } = useEventStore();
+    const [recent, setRecent] = useState<string[]>([]);
 
-    useEffect(() => {
-        getFavorites();
-    }, [])
+    useEffect(() => { setRecent(readRecent()); }, [term]);
 
-    // Landed here from a friend-invite link (email/WhatsApp) -> open registration directly
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        if (new URLSearchParams(window.location.search).get('invite') === '1' && !auth) {
-            setAuthRegisterMode(true);
-            setOpenAuth(true);
+    if (term.length > 3) {
+        if (eventSearch === null || eventSearch === undefined) {
+            return <p className="px-4 py-6 text-label text-ink-soft">Buscando…</p>;
         }
-    }, [auth])
-
-    const [search, setSearch] = useState<string>("");
-    const [hoveredFavoriteId, setHoveredFavoriteId] = useState<number | null>(null);
-    const [isFindResult, setFindResults] = useState<boolean>(false);
-    const favoritesRef = useRef<HTMLDivElement>(null);
-    const searchRef = useRef<HTMLDivElement>(null);
-
-    const debounceSearch = useDebounce(search, 1000)
-
-    const [recentSearches, setRecentSearches] = useState<string[]>([]);
-
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const t = localStorage.getItem("token");
-            setToken(t);
+        if (eventSearch.length === 0) {
+            return (
+                <div className="px-4 py-6">
+                    <p className="text-body font-semibold text-ink">Sin resultados para “{term}”</p>
+                    <p className="mt-1 text-label text-ink-soft">Prueba con el nombre del artista, del lugar o del distrito.</p>
+                </div>
+            );
         }
-    }, []);
-
-
-
-    useEffect(() => {
-        if (debounceSearch.length <= 3) {
-            const savedSearches = JSON.parse(localStorage.getItem("recentSearches") || "[]");
-            setRecentSearches(savedSearches);
-        }
-    }, [debounceSearch]);
-
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
-
-    useEffect(() => {
-        if (debounceSearch?.length > 3 && eventSearch?.length === 0 && !isOpenEvent) {
-            setFindResults(true);
-        }
-    }, [debounceSearch, eventSearch, isOpenEvent]);
-
-    useEffect(() => {
-        if (debounceSearch?.length > 3) {
-            setIsOpenEvent(true)
-            setFindResults(true);
-            getEventBySearch(debounceSearch);
-        } else {
-            setFindResults(false);
-            resetEventBySearch();
-        }
-    }, [debounceSearch])
-
-    useEffect(() => {
-        resetEventBySearch();
-        setIsOpenEvent(false)
-    }, [])
-
-    const saveSearch = (term: string) => {
-        getValueSearch(term);
-        // Obtener búsquedas recientes desde localStorage
-        const recentSearches = JSON.parse(localStorage.getItem("recentSearches") || "[]");
-
-        // Evitar duplicados y limitar el historial a las últimas 10 búsquedas
-        const updatedSearches = [term, ...recentSearches.filter((item: string) => item !== term)].slice(0, 10);
-
-        // Guardar búsquedas recientes en localStorage
-        localStorage.setItem("recentSearches", JSON.stringify(updatedSearches));
-
-        // Actualizar el estado
-        setRecentSearches(updatedSearches);
-
-        setIsOpenEvent(false)
-        setSearch("");
-    };
-
-    const deleteFavorites = (e: any, item: any) => {
-        e.stopPropagation();
-        deleteFavorite(item)
-    }
-
-    const eventsOnlyFavorites = favorites ?? [];
-
-    const navigateEvent = (item: any) => {
-        setIsOpenFavorite(false); // Close modal before navigating
-        navigation.push(`/evento/${item?.ideventos}/${item.idfecha}`)
-    }
-
-    const isMobile = useIsMobile(767); // aligned with Tailwind's md: breakpoint used alongside it below
-
-    function HighlightedText({ text, highlight }: { text: string; highlight: string }) {
-        if (!highlight) {
-            return <span>{text}</span>;
-        }
-
-        // Crear una expresión regular para buscar el texto que coincide, ignorando mayúsculas/minúsculas
-        const regex = new RegExp(`(${highlight})`, 'gi');
-        const parts = text?.split(regex);
-
         return (
-            <span>
-                {parts?.map((part, index) =>
-                    regex.test(part) ? (
-                        <b key={index} className="font-black text-black">
-                            {part}
-                        </b>
-                    ) : (
-                        part
-                    )
-                )}
-            </span>
+            <div>
+                <ul className="py-2">
+                    {eventSearch.slice(0, 8).map((item) => (
+                        <li key={`${item.ideventos}-${item.idfecha}`}>
+                            <Link
+                                href={eventPath(item.ideventos, item.titulo, item.idfecha)}
+                                onClick={() => onPick(item.titulo)}
+                                className="flex items-center gap-3 px-4 py-2.5 hover:bg-canvas"
+                            >
+                                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control bg-brand-mist">
+                                    {item.url && <Image src={item.url} alt="" fill sizes="48px" className="object-cover" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-label text-ink">{item.titulo}</p>
+                                    <p className="truncate text-caption text-ink-soft">{item.NombreLocal}</p>
+                                </div>
+                                <span className="shrink-0 text-caption font-semibold capitalize text-brand">{shortDate(item.FechaInicio)}</span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+                <Link
+                    href={searchPath({ q: term })}
+                    onClick={() => onPick(term)}
+                    className="block border-t border-line px-4 py-3 text-label text-brand hover:bg-canvas"
+                >
+                    Ver todos los resultados para “{term}”
+                </Link>
+            </div>
         );
     }
 
-    const closeModal = () => {
-        document.body.classList.remove('ReactModal__Body--open');
-        setIsOpenFavorite(false);
+    if (recent.length === 0) {
+        return <p className="px-4 py-6 text-label text-ink-soft">Escribe al menos 4 letras para buscar eventos o lugares.</p>;
     }
+    return (
+        <div className="py-2">
+            <p className="px-4 pb-1 pt-2 text-caption font-semibold text-ink-soft">Búsquedas recientes</p>
+            <ul>
+                {recent.map((r) => (
+                    <li key={r}>
+                        <Link href={searchPath({ q: r })} onClick={() => onPick(r)} className="flex items-center gap-2 px-4 py-2 text-label font-medium text-ink hover:bg-canvas">
+                            <Icon icon="solar:history-linear" width={16} className="text-brand-gray" aria-hidden />
+                            {r}
+                        </Link>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
+function useHeaderSearch() {
+    const router = useRouter();
+    const { getEventBySearch, resetEventBySearch, getValueSearch } = useEventStore();
+    const [term, setTerm] = useState('');
+    const debounced = useDebounce(term, 400);
 
     useEffect(() => {
-        return () => {
-            document.body.classList.remove('ReactModal__Body--open');
-        };
-    }, [isOpenFavorite, isOpenEvent]);
-
-    const logoutUser = () => {
-        if (typeof window !== "undefined") {
-            localStorage.removeItem("token");
+        if (debounced.length > 3) {
+            useEventStore.setState({ eventSearch: null }); // "Buscando…" until results arrive
+            getEventBySearch(debounced);
+        } else {
+            resetEventBySearch();
         }
-        logout();
-        // Clear favorites on logout
-        useFavoriteStore.setState({ favorites: [] });
-        setIsUserDropdownOpen(false);
-        navigation.push('/');
+    }, [debounced]);
+
+    const remember = (value: string) => {
+        if (!value) return;
+        getValueSearch(value);
+        track('search', { search_term: value });
+        localStorage.setItem(RECENT_KEY, JSON.stringify([value, ...readRecent().filter((r) => r !== value)].slice(0, 8)));
+        setTerm('');
     };
+
+    const submit = () => {
+        const value = term.trim();
+        if (!value) return;
+        remember(value);
+        router.push(searchPath({ q: value }));
+    };
+
+    return { term, setTerm, remember, submit };
+}
+
+/* ---------- Favorites ---------- */
+
+function FavoritesList({ onNavigate }: { onNavigate: () => void }) {
+    const { favorites, deleteFavorite } = useFavoriteStore();
+    const list: any[] = favorites ?? [];
+
+    if (list.length === 0) {
+        return (
+            <div className="px-6 py-10 text-center">
+                <Icon icon="solar:heart-linear" width={36} className="mx-auto text-brand-gray" aria-hidden />
+                <p className="mt-3 text-body font-semibold text-ink">Aún no tienes favoritos</p>
+                <p className="mt-1 text-label text-ink-soft">Toca el corazón de un evento para guardarlo aquí.</p>
+            </div>
+        );
+    }
+
+    return (
+        <ul className="py-2">
+            {list.map((item) => (
+                <li key={item.idfavoritos ?? `${item.ideventos}-${item.idfecha}`} className="group relative">
+                    <Link href={eventPath(item.ideventos, item.titulo, item.idfecha)} onClick={onNavigate} className="flex items-center gap-3 px-4 py-2.5 pr-12 hover:bg-canvas">
+                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control bg-brand-mist">
+                            {item.url && <Image src={item.url} alt="" fill sizes="48px" className="object-cover" />}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-caption font-semibold capitalize text-brand">{shortDate(item.FechaInicio)}{item.HoraInicio ? `, ${item.HoraInicio}` : ''}</p>
+                            <p className="truncate text-label text-ink">{item.titulo}</p>
+                            <p className="truncate text-caption text-ink-soft">{item.NombreLocal}</p>
+                        </div>
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => deleteFavorite(item)}
+                        aria-label={`Quitar ${item.titulo} de favoritos`}
+                        className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-soft hover:bg-white hover:text-brand-wine"
+                    >
+                        <Icon icon="solar:close-circle-linear" width={20} />
+                    </button>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+/* ---------- Header ---------- */
+
+const NAV = [
+    { href: '/', label: 'Inicio' },
+    { href: '/eventos', label: 'Explorar eventos' },
+];
+
+const Header = () => {
+    const { auth, me, logout, authModal, openAuthModal, closeAuthModal } = useAuthStore();
+    const { getFavorites, favorites } = useFavoriteStore();
+    const { countsCategories, getCategoriesCount } = useCategoriesState();
+    const router = useRouter();
+    const path = usePathname() || '/';
+    const publishEvent = usePublishEvent();
+    const search = useHeaderSearch();
+
+    const [isSearchOpen, setIsSearchOpen, searchRef] = useOutsideClick(false);
+    const [isFavOpen, setIsFavOpen, favRef] = useOutsideClick(false);
+    const [isUserOpen, setIsUserOpen, userRef] = useOutsideClick(false);
+    const [isCatOpen, setIsCatOpen, catRef] = useOutsideClick(false);
+    const [mobileSearch, setMobileSearch] = useState(false);
+    const [mobileMenu, setMobileMenu] = useState(false);
 
     useEffect(() => {
         me();
-    }, [])
+        getFavorites();
+    }, []);
 
-    // Hide Header on Admin routes
-    if (path?.startsWith('/admin')) return null;
+    // Friend-invite links (email/WhatsApp) land with ?invite=1 -> open registration
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).get('invite') === '1' && !auth) openAuthModal(true);
+    }, [auth]);
 
+    // Close every overlay on navigation
+    useEffect(() => {
+        setMobileMenu(false);
+        setMobileSearch(false);
+        setIsFavOpen(false);
+        setIsUserOpen(false);
+        setIsCatOpen(false);
+    }, [path]);
+
+    // Lock page scroll behind full-screen mobile panels
+    useEffect(() => {
+        const locked = mobileMenu || mobileSearch;
+        document.body.style.overflow = locked ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
+    }, [mobileMenu, mobileSearch]);
+
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key !== 'Escape') return;
+            setMobileMenu(false); setMobileSearch(false); setIsFavOpen(false); setIsUserOpen(false); setIsCatOpen(false); setIsSearchOpen(false);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
+
+    const openCategories = () => {
+        if (!countsCategories) getCategoriesCount();
+        setIsCatOpen((v) => !v);
+    };
+
+    const logoutUser = () => {
+        logout();
+        useFavoriteStore.setState({ favorites: [] });
+        setIsUserOpen(false);
+        router.push('/');
+    };
+
+    if (path.startsWith('/admin')) return null;
+
+    const showSearch = !path.startsWith('/eventos');
+    const categories: any[] = (countsCategories || []).filter((c: any) => c.cantidad > 0);
+    const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+    const favoritesCount = favorites?.length ?? 0;
+    const { avatar } = getProfileAssets(auth?.profile as any);
+
+    const userLinks = auth ? [
+        { href: `/usuario/${auth.id}`, icon: 'solar:user-linear', label: 'Mi perfil' },
+        { href: '/explorar', icon: 'solar:compass-linear', label: 'Comunidad' },
+        { href: '/amigos', icon: 'solar:users-group-rounded-linear', label: 'Amigos' },
+        { href: '/mensajes', icon: 'solar:chat-round-dots-linear', label: 'Mensajes' },
+        ...(auth.userType === 'COMPANY' ? [{ href: '/mis-eventos', icon: 'solar:calendar-linear', label: 'Mis eventos' }] : []),
+        { href: '/perfil/editar', icon: 'solar:settings-linear', label: 'Configuración' },
+        ...(auth.role === 'ADMIN' ? [{ href: '/admin', icon: 'solar:widget-linear', label: 'Panel de administración' }] : []),
+    ] : [];
+
+    // Solid background on purpose: backdrop-filter would trap the fixed menu and search overlays inside the header
     return (
-        <div className="border-b border-solid border-[#EDEFF5] bg-[#F9FAFC]">
-            <Auth openAuth={openAuth} setOpenAuth={setOpenAuth} isRegister={authRegisterMode} setIsRegister={setAuthRegisterMode} />
-            <div className="2xl:max-w-screen-2xl xl:max-w-screen-xl xl:px-10 max-w-[998px] h-18 py-3 px-3 mx-auto items-center grid grid-cols-12">
-                <Link prefetch={true} className='w-32 md:w-48 col-span-4 md:col-span-3' href="/"><Image src={logo} alt="logo" className='w-full' height={400} width={300} /></Link>
-                {
-                    !path.startsWith("/busqueda") && (
-                        <div className={
-                            isMobile ?
-                                "relative w-full" : "hidden relative border col-start-4 col-end-9 w-full col-span-5 md:flex items-center border-1 border-solid border-[#e8e8e8] rounded-[50px] bg-white"}>
-                            <div className="flex justify-center pr-2 pl-4">
-                                <Image src={lupa} width={28} onClick={() => setIsOpenEvent(true)} alt="lupa" className="hidden md:block" />
+        <header className="sticky top-0 z-40 border-b border-line bg-white">
+            <Auth
+                openAuth={authModal.open}
+                setOpenAuth={(open: boolean) => (open ? openAuthModal(authModal.register) : closeAuthModal())}
+                isRegister={authModal.register}
+                setIsRegister={(register: boolean) => openAuthModal(register)}
+            />
+
+            <div className="container-page flex h-16 items-center gap-3 lg:h-[72px] lg:gap-6">
+                <Link href="/" className="shrink-0" aria-label="Injoyplan, ir al inicio">
+                    <Image src={logo} alt="Injoyplan" priority className="h-auto w-[132px] lg:w-[150px]" />
+                </Link>
+
+                {/* Desktop navigation */}
+                <nav aria-label="Principal" className="hidden items-center gap-1 lg:flex">
+                    {NAV.map((n) => (
+                        <Link key={n.href} href={n.href} aria-current={isActive(n.href) ? 'page' : undefined}
+                            className={`rounded-control px-3 py-2 text-label transition-colors ${isActive(n.href) ? 'text-brand' : 'text-ink hover:text-brand'}`}>
+                            {n.label}
+                        </Link>
+                    ))}
+                    <div className="relative" ref={catRef}>
+                        <button type="button" onClick={openCategories} aria-expanded={isCatOpen}
+                            className="flex items-center gap-1 rounded-control px-3 py-2 text-label text-ink hover:text-brand">
+                            Categorías
+                            <Icon icon="solar:alt-arrow-down-linear" width={16} className={`transition-transform ${isCatOpen ? 'rotate-180' : ''}`} aria-hidden />
+                        </button>
+                        {isCatOpen && (
+                            <div className="absolute left-0 top-full mt-2 w-72 rounded-card border border-line bg-white p-2 shadow-float">
+                                {categories.length === 0 ? (
+                                    <p className="px-3 py-4 text-label text-ink-soft">Cargando categorías…</p>
+                                ) : categories.map((c) => (
+                                    <Link key={c.idCategorias} href={searchPath({ categoria: c.nombreCategoria })}
+                                        onClick={() => track('select_category', { category: c.nombreCategoria })}
+                                        className="flex items-center justify-between rounded-control px-3 py-2.5 text-label text-ink hover:bg-canvas hover:text-brand">
+                                        {c.nombreCategoria}
+                                        <span className="text-caption text-ink-soft">{c.cantidad}</span>
+                                    </Link>
+                                ))}
+                                <Link href="/eventos" className="mt-1 block border-t border-line px-3 pb-1 pt-3 text-label text-brand">Ver todos los eventos</Link>
                             </div>
-                            <div className="relative w-full rounded-2xl" ref={searchRef}>
-                                {
-                                    !isMobile &&
-                                    <input
-                                        onClick={() => setIsOpenEvent(true)}
-                                        onChange={(e: any) => setSearch(e.target.value)}
-                                        type="text" placeholder="Evento o lugar"
-                                        value={search}
-                                        className="w-full  placeholder:text-[#bababa] bg-transparent border-none rounded-3xl relative outline-none font-[Quicksand] py-3 text-md text-[#5C6570] font-bold"
-                                    />
-                                }
-                                {
-                                    isOpenEvent && (
-                                        <div ref={refEvent} className={"hidden md:block md:max-h-[400px] px-5 md:px-0 md:p-0 md:h-auto overflow-y-auto absolute bg-[#fff] w-full left-0 rounded-xl shadow-custom-2 md:top-16 h-[100vh] top-0 z-50"}>
-                                            {
-                                                isMobile && <div className="flex border mt-5 border-solid border-[#ddd] p-3 rounded-full">
-                                                    <Image src={lupa} alt="lupa" className="" />
-                                                    <input className='w-full outline-none pl-3' onChange={(e: any) => setSearch(e.target.value)} type="text" placeholder="Evento o lugar" />
-                                                    <Icon width={30} icon="openmoji:close" color='#8B2B2C' onClick={() => setIsOpenEvent(false)} />
-                                                </div>
-                                            }
-                                            <div>
-                                                <div>
-                                                    {
-                                                        eventSearch?.length > 0 ? <>
-                                                            <div>
-                                                                <h3 className='pt-5 pb-5 md:p-5 md:pb-4 sticky top-0 font-bold bg-[#fff] z-50 text-[20px] border-b border-solid border-[#ddd]'>Eventos</h3>
-                                                                {eventSearch?.length > 0 && eventSearch?.slice(0, 10)?.map((item: any, index: number) => (
-                                                                    <Link onClick={() => {
-                                                                        saveSearch(item.titulo)
+                        )}
+                    </div>
+                </nav>
 
-                                                                    }} className={sans.className} href={`/evento/${item?.ideventos}/${item.idfecha}`} key={index}>
-
-                                                                        <div className='flex justify-between md:p-5 pb-3 pt-2 md:pt-5'>
-                                                                            <div className='flex items-center'>
-                                                                                <div className="w-[40px] h-[40px] mr-4">
-                                                                                    <Image className='w-full h-full object-fill' objectFit='contain' width={100} height={100} src={item.url || item.imageUrl} alt="" />
-                                                                                </div>
-                                                                                <div>
-                                                                                    <h3 className='font-normal text-md text-black text-ellipsis w-[320px] overflow-hidden whitespace-nowrap'> <HighlightedText text={item.titulo} highlight={search} /></h3>
-                                                                                    <span className='opacity-[0.5] text-[13px]'>{item.NombreLocal}</span>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div className='text-right'>
-                                                                                <p className={quicksand.className + ' font-bold opacity-50'}> {moment(item.FechaInicio).utcOffset(-5).format('ddd, D MMM').toLowerCase().replace('.', "")}</p>
-                                                                                <p className={quicksand.className + ' text-right text-[#848484] text-[14px]'}>{item.HoraInicio}</p>
-                                                                            </div>
-                                                                        </div>
-                                                                    </Link>
-                                                                ))}
-                                                            </div>
-                                                            <div>
-                                                                {
-                                                                    eventSearch?.length > 0 && (
-                                                                        <div onClick={() => {
-                                                                            saveSearch(search)
-
-                                                                        }} className='pt-4 md:p-4 border-t border-solid border-[#ddd]'>
-                                                                            <Link className='text-md text-[#1087AA]' href={`/busqueda/${search}`}><p>Ver todos los resultados para <strong>{search}</strong></p></Link>
-                                                                        </div>
-                                                                    )
-                                                                }
-                                                            </div>
-                                                        </>
-                                                            :
-
-
-                                                            <div>
-                                                                {
-                                                                    isFindResult ? <>
-                                                                        <div>
-                                                                            <p className='p-4 py-5 text-[#222]'>Ver todos los resultados para <strong>{search}</strong></p>
-                                                                        </div>
-                                                                    </> :
-                                                                        <>
-                                                                            {recentSearches?.length > 0 &&
-                                                                                // <p className={styles.noResults}>Ver todos los resultado para <strong>{search || "Por buscar ..."}</strong></p>
-                                                                                <div>
-                                                                                    <h3 className='p-5 font-bold text-[16px] border-b border-solid border-[#ddd]'>Recientes</h3>
-                                                                                    <ul>
-                                                                                        {recentSearches.length > 0 ? (
-                                                                                            recentSearches.map((term, index) => (
-                                                                                                <li key={index} onClick={() => setSearch(term)} className="px-5 py-2 cursor-pointer hover:bg-gray-100">
-                                                                                                    {term}
-                                                                                                </li>
-                                                                                            ))
-                                                                                        ) : (
-                                                                                            <p className="p-2 text-gray-500">No tienes búsquedas recientes</p>
-                                                                                        )}
-                                                                                    </ul>
-                                                                                </div>
-                                                                            }
-                                                                        </>
-                                                                }
-                                                            </div>
-                                                    }
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )
-                                }
-
-                                {
-                                    isMobile && isOpenEvent && (
-                                        <ReactModal
-                                            isOpen
-                                            ariaHideApp={false}
-                                            className={"p-0 m-0 bg-[#fff] overflow-y-auto overflow-x-hidden h-screen w-screen"}
-                                            style={{
-                                                content: {
-                                                    position: 'fixed',
-                                                    inset: 0,
-                                                    padding: 0,
-                                                    margin: 0,
-                                                    border: 'none',
-                                                    borderRadius: 0,
-                                                    width: '100vw',
-                                                    height: '100vh',
-                                                    maxWidth: '100vw',
-                                                    maxHeight: '100vh',
-                                                    overflow: 'hidden',
-                                                },
-                                                overlay: {
-                                                    position: 'fixed',
-                                                    inset: 0,
-                                                    backgroundColor: '#ffffff',
-                                                    zIndex: 9999,
-                                                    margin: 0,
-                                                    padding: 0,
-                                                }
-                                            }}
-                                        >
-                                            <div ref={refEvent} className={"w-screen h-screen overflow-y-auto overflow-x-hidden bg-[#fff] px-5"}>
-                                                {
-                                                    isMobile && <div className="flex border mt-5 border-solid border-[#ddd] p-3 rounded-full icon">
-                                                        <Image src={lupa} alt="lupa" className="" />
-                                                        <input className='w-full outline-none pl-3' value={search} onChange={(e: any) => setSearch(e.target.value)} type="text" placeholder="Evento o lugar" />
-                                                        <Icon width={33} icon="openmoji:close" onClick={() => {
-                                                            setIsOpenEvent(false);
-                                                            setSearch(""); // Reset input on close
-                                                        }} />
-                                                    </div>
-                                                }
-                                                <div>
-                                                    <div>
-                                                        {
-                                                            eventSearch?.length > 0 ? <>
-                                                                <div>
-                                                                    <h3 className='pt-5 pb-5 md:p-5 md:pb-4 sticky top-0 font-bold bg-[#fff] z-50 text-[20px] border-b border-solid border-[#ddd]'>Eventos</h3>
-                                                                    {eventSearch?.length > 0 && eventSearch?.slice(0, 10)?.map((item: any, index: number) => (
-                                                                        <Link onClick={() => {
-                                                                            saveSearch(item.titulo)
-
-                                                                        }} className={sans.className} href={`/evento/${item?.ideventos}/${item.idfecha}`} key={index}>
-
-                                                                            <div className='flex justify-between md:p-5 pb-3 pt-2 md:pt-5'>
-                                                                                <div className='flex items-center'>
-                                                                                    <div className="w-[40px] h-[40px] mr-4">
-                                                                                        <Image className='w-full h-full object-fill' objectFit='contain' width={100} height={100} src={item.url || item.imageUrl} alt="" />
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <h3 className='font-normal text-md text-[#444] text-ellipsis md:w-[320px] max-w-[50vw] overflow-hidden whitespace-nowrap'> <HighlightedText text={item.titulo} highlight={search} /></h3>
-                                                                                        <span className='opacity-[0.5] text-[13px]'>{item.NombreLocal}</span>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className='text-right'>
-                                                                                    <p className={quicksand.className + ' font-bold opacity-50'}> {moment(item.FechaInicio).utc().format('ddd, D MMM').toLowerCase().replace('.', "")}</p>
-                                                                                    <p className={quicksand.className + ' text-right text-[#848484] text-[14px]'}>{item.HoraInicio}</p>
-                                                                                </div>
-                                                                            </div>
-                                                                        </Link>
-                                                                    ))}
-                                                                </div>
-                                                                <div>
-                                                                    {
-                                                                        eventSearch?.length > 0 && (
-                                                                            <div onClick={() => {
-                                                                                saveSearch(search)
-
-                                                                            }} className='pt-4 md:p-4 border-t border-solid border-[#ddd]'>
-                                                                                <Link className='text-md text-[#1087AA]' href={`/busqueda/${search}`}><p>Ver todos los resultados para <strong>{search}</strong></p></Link>
-                                                                            </div>
-                                                                        )
-                                                                    }
-                                                                </div>
-                                                            </>
-                                                                :
-
-
-                                                                <div>
-                                                                    {
-                                                                        isFindResult ? <>
-                                                                            <div>
-                                                                                <p className='p-4 py-5 text-[#862020]'>Ver todos los resultados para <strong>{search}</strong></p>
-                                                                            </div>
-                                                                        </> :
-                                                                            <>
-                                                                                {recentSearches?.length > 0 &&
-                                                                                    // <p className={styles.noResults}>Ver todos los resultado para <strong>{search || "Por buscar ..."}</strong></p>
-                                                                                    <div>
-                                                                                        <h3 className='p-5 font-bold text-[16px] border-b border-solid border-[#ddd] mb-3'>Recientes</h3>
-                                                                                        <ul>
-                                                                                            {recentSearches.length > 0 ? (
-                                                                                                recentSearches.map((term, index) => (
-                                                                                                    <li key={index} onClick={() => setSearch(term)} className="px-5 py-2 cursor-pointer hover:bg-gray-100">
-                                                                                                        {term}
-                                                                                                    </li>
-                                                                                                ))
-                                                                                            ) : (
-                                                                                                <p className="p-2 text-gray-500">No tienes búsquedas recientes</p>
-                                                                                            )}
-                                                                                        </ul>
-                                                                                    </div>
-                                                                                }
-                                                                            </>
-                                                                    }
-                                                                </div>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </ReactModal>
-
-
-                                    )
-                                }
-                            </div>
-                        </div>
-                    )
-                }
-
-
-
-                <div className={`col-start-9 col-end-13 flex justify-end md:relative items-center gap-2 ${(path === "/nosotros" || path === "/preguntas-frecuentes" || path === "/terminos-y-condiciones" || path === "/contactanos") && (auth as any)?.userType !== 'COMPANY' ? 'hidden md:flex' : ''}`} ref={favoritesRef}>
-                    {/* User Section - Avatar Dropdown (Desktop & Mobile) */}
-                    {auth !== null && (
-                        <div className="relative" ref={refUserDropdown}>
-                            <button
-                                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                            >
-                                {/* Avatar */}
-                                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-[#007FA4] to-[#00DFD1] flex items-center justify-center text-white font-bold text-xs md:text-sm overflow-hidden border-2 border-white shadow-md">
-                                    {(() => {
-                                        const a: any = auth;
-                                        const profile = a?.profile;
-                                        // Using centralized asset logic
-                                        const { avatar } = getProfileAssets(profile);
-
-                                        return <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />;
-                                    })()}
-                                </div>
-                                {/* User Name */}
-                                {/* <span className="font-bold text-[#212121] text-sm hidden lg:block max-w-[150px] truncate">
-                                            {(() => {
-                                                const a: any = auth;
-                                                const fullName = [a?.profile?.firstName, a?.profile?.lastName]
-                                                    .filter(Boolean)
-                                                    .join(' ')
-                                                    .trim();
-                                                const legacy = `${a?.nombre ?? ''} ${a?.Apellido ?? ''}`.trim();
-                                                return fullName || legacy || 'Usuario';
-                                            })()}
-                                        </span> */}
-                                {/* <Icon icon="solar:alt-arrow-down-linear" className={`text-[#666] transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} width={16} /> */}
-                            </button>
-
-                            {/* Dropdown Menu */}
-                            {isUserDropdownOpen && (
-                                <div className="absolute right-0 md:right-[-90px] top-14 w-56 max-w-[calc(100vw-1.5rem)] bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fadeIn">
-                                    {/* <div className="px-4 py-3 border-b border-gray-100">
-                                                <p className="font-bold text-[#212121] text-sm truncate">
-                                                    {(() => {
-                                                        const a: any = auth;
-                                                        return a?.email || 'usuario@email.com';
-                                                    })()}
-                                                </p>
-                                            </div> */}
-                                    <Link onClick={() => setIsUserDropdownOpen(false)} href={`/usuario/${(auth as any)?.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                                        <Icon icon="solar:user-bold" className="text-[#007FA4]" width={20} />
-                                        <span className="text-[#212121] text-sm">Ver perfil</span>
-                                    </Link>
-                                    <Link onClick={() => setIsUserDropdownOpen(false)} href="/explorar" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                                        <Icon icon="solar:compass-bold" className="text-[#007FA4]" width={20} />
-                                        <span className="text-[#212121] text-sm">Explorar</span>
-                                    </Link>
-                                    <Link onClick={() => setIsUserDropdownOpen(false)} href="/amigos" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                                        <Icon icon="solar:users-group-rounded-bold" className="text-[#007FA4]" width={20} />
-                                        <span className="text-[#212121] text-sm">Amigos</span>
-                                    </Link>
-
-                                    {/* My Events - Only for COMPANY type */}
-                                    {(() => {
-                                        const a: any = auth;
-                                        if (a?.userType === 'COMPANY') {
-                                            return (
-                                                <Link onClick={() => setIsUserDropdownOpen(false)} href="/mis-eventos" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                                                    <Icon icon="solar:calendar-bold" className="text-[#007FA4]" width={20} />
-                                                    <span className="text-[#212121] text-sm">Mis Eventos</span>
-                                                </Link>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-
-                                    <Link onClick={() => setIsUserDropdownOpen(false)} href="/mensajes" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                                        <Icon icon="solar:chat-round-dots-bold" className="text-[#007FA4]" width={20} />
-                                        <span className="text-[#212121] text-sm">Mis Mensajes</span>
-                                    </Link>
-
-                                    <Link onClick={() => setIsUserDropdownOpen(false)} href="/perfil/editar" className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                                        <Icon icon="solar:settings-bold" className="text-[#007FA4]" width={20} />
-                                        <span className="text-[#212121] text-sm">Configuración</span>
-                                    </Link>
-
-                                    {/* Admin Link - Only for ADMIN role */}
-                                    {(() => {
-                                        const a: any = auth;
-                                        if (a?.userType === 'COMPANY') {
-                                            return (
-                                                <Link onClick={() => setIsUserDropdownOpen(false)} href="/admin" className="flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition-colors border-t border-gray-100">
-                                                    <Icon icon="solar:widget-bold" className="text-purple-600" width={20} />
-                                                    <span className="text-purple-600 text-sm font-medium">Ir Administrador</span>
-                                                </Link>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-
-                                    <div className="border-t border-gray-100 mt-2 pt-2">
-                                        <button
-                                            onClick={logoutUser}
-                                            className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors w-full text-left"
-                                        >
-                                            <Icon icon="solar:logout-2-bold" className="text-red-500" width={20} />
-                                            <span className="text-red-500 text-sm font-medium">Cerrar Sesión</span>
-                                        </button>
-                                    </div>
+                {/* Desktop search */}
+                <div className="hidden flex-1 md:block">
+                    {showSearch && (
+                        <div className="relative mx-auto max-w-md" ref={searchRef}>
+                            <form role="search" onSubmit={(e) => { e.preventDefault(); search.submit(); setIsSearchOpen(false); }}>
+                                <label htmlFor="header-search" className="sr-only">Buscar eventos o lugares</label>
+                                <Icon icon="solar:magnifer-linear" width={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-gray" aria-hidden />
+                                <input
+                                    id="header-search"
+                                    type="search"
+                                    autoComplete="off"
+                                    value={search.term}
+                                    onFocus={() => setIsSearchOpen(true)}
+                                    onChange={(e) => { search.setTerm(e.target.value); setIsSearchOpen(true); }}
+                                    placeholder="Busca un evento, artista o lugar"
+                                    className="h-11 w-full rounded-full border border-line bg-canvas pl-11 pr-4 text-label font-medium text-ink placeholder:font-normal placeholder:text-brand-gray focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/20"
+                                />
+                            </form>
+                            {isSearchOpen && (
+                                <div className="absolute left-0 right-0 top-full mt-2 max-h-[70vh] overflow-y-auto rounded-card border border-line bg-white shadow-float">
+                                    <SearchResults term={search.term} onPick={(t) => { search.remember(t); setIsSearchOpen(false); }} />
                                 </div>
                             )}
                         </div>
                     )}
+                </div>
 
+                <div className="ml-auto flex items-center gap-1 sm:gap-2 md:ml-0">
+                    {showSearch && (
+                        <button type="button" onClick={() => setMobileSearch(true)} aria-label="Buscar"
+                            className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-canvas md:hidden">
+                            <Icon icon="solar:magnifer-linear" width={22} />
+                        </button>
+                    )}
 
-                    {
-                        (path === "/nosotros" || path === "/preguntas-frecuentes" || path === "/terminos-y-condiciones" || path === "/contactanos") && (auth as any)?.userType !== 'COMPANY' && (
-                            <div className='col-start-9 md:col-start-8 xl:col-start-7 col-end-13 md:col-end-10 flex justify-end items-center mr-4'>
-                                <a href="https://www.facebook.com/injoyplan" target="_blank" rel="noopener noreferrer" className='border-[#007FA4] border border-solid rounded-full md:px-4 px-4 py-0.5 md:py-[2px] hover:bg-gray-100 transition-colors'>
-                                    <Image className='md:w-3 py-2 w-[10px]' src={fb} width={20} height={20} alt='facebook' />
-                                </a>
-                                <a href="https://www.instagram.com/injoyplan" target="_blank" rel="noopener noreferrer" className='ml-3 border-[#007FA4] border border-solid rounded-full md:px-2.5 px-3 py-3 md:py-[10px] hover:bg-gray-100 transition-colors'>
-                                    <Image className='md:w-6 w-[17px]' src={ig} width={20} height={20} alt='ig' />
-                                </a>
+                    <button type="button" onClick={publishEvent} className="btn-ghost btn-sm hidden xl:inline-flex">
+                        <Icon icon="solar:add-circle-linear" width={18} aria-hidden />
+                        Publica tu evento
+                    </button>
+
+                    {/* Favorites */}
+                    <div className="relative" ref={favRef}>
+                        <button type="button" onClick={() => setIsFavOpen((v) => !v)} aria-expanded={isFavOpen}
+                            aria-label={`Favoritos${favoritesCount ? ` (${favoritesCount})` : ''}`}
+                            className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors ${isFavOpen ? 'bg-brand-mist text-brand-wine' : 'text-ink hover:bg-canvas'}`}>
+                            <Icon icon={favoritesCount ? 'solar:heart-bold' : 'solar:heart-linear'} width={22} className={favoritesCount ? 'text-brand-wine' : ''} />
+                            {favoritesCount > 0 && (
+                                <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand-wine px-1 text-[10px] font-bold text-white">{favoritesCount}</span>
+                            )}
+                        </button>
+                        {isFavOpen && (
+                            <div className="fixed inset-x-3 top-[68px] max-h-[75vh] overflow-y-auto rounded-card border border-line bg-white shadow-float sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[380px]">
+                                <p className="sticky top-0 border-b border-line bg-white px-4 py-3 text-body font-bold text-ink">Tus favoritos</p>
+                                <FavoritesList onNavigate={() => setIsFavOpen(false)} />
                             </div>
-                        )
-                    }
-
-
-                    {/* Login Button (Not Authenticated) */}
-                    {auth === null && !isMobile && path !== "/nosotros" && path !== "/preguntas-frecuentes" && path !== "/terminos-y-condiciones" && path !== "/contactanos" && (
-                        <button onClick={() => setOpenAuth(true)}
-                            className='text-white bg-[#007FA4] text-[15px] py-[10px] px-[25px] rounded-[20px] font-open-sans cursor-pointer'
-                        >Ingresar</button>
-                    )}
-                    {auth === null && isMobile && path !== "/nosotros" && path !== "/preguntas-frecuentes" && path !== "/terminos-y-condiciones" && path !== "/contactanos" && (
-                        <button onClick={() => setOpenAuth(true)}
-                            className='text-white bg-[#007FA4] text-[15px] p-2 rounded-[20px] font-open-sans cursor-pointer'
-                        ><Icon icon="solar:user-bold" width="10" height="10" /></button>
-                    )}
-
-                    {/* Explore Icon (Desktop & Mobile) */}
-                    {/* <Link
-                        href="/explorar"
-                        className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 transition-colors"
-                        title="Explorar"
-                    >
-                        <Icon icon="solar:compass-bold" className="text-[#007FA4]" width={28} />
-                    </Link> */}
-
-                    {/* Mobile Search */}
-                    {isMobile && !path.startsWith('/busqueda') && (
-                        <Image onClick={() => {
-                            setIsOpenEvent(true);
-                            setSearch(""); // Clear local input (Correct function is setSearch)
-                            resetEventBySearch(); // Clear zustand results
-                        }} className='' src={lupaMobile} alt="lupa" width={30} height={30} />
-                    )}
-                    {
-                        path !== "/nosotros" && path !== "/preguntas-frecuentes" && path !== "/terminos-y-condiciones" && path !== "/contactanos" && (
-                            isOpenFavorite ? (
-                                <Image src={heartWhite} className='md:bg-[#007FA4] cursor-pointer rounded-full p-2' alt="cora" width={43} height={43} onClick={() => setIsOpenFavorite(true)} />
-                            ) :
-                                (
-                                    <Image src={cora} className='md:bg-[#DBEBF1] cursor-pointer rounded-full p-2' alt="cora" width={43} height={43} onClick={() => setIsOpenFavorite(true)} />
-                                )
-
-                        )
-                    }
-
-
-                    <div className='md:hidden'>
-                        {
-                            isOpenFavorite && isMobile && (
-                                <ReactModal
-                                    isOpen
-                                    ariaHideApp={false}
-                                    className={"p-0 m-0 bg-[#fff] overflow-y-auto overflow-x-hidden h-screen w-screen"}
-                                    style={{
-                                        content: {
-                                            position: 'fixed',
-                                            inset: 0,
-                                            padding: 0,
-                                            margin: 0,
-                                            border: 'none',
-                                            borderRadius: 0,
-                                            width: '100vw',
-                                            height: '100vh',
-                                            minHeight: '100vh',
-                                            maxHeight: '100vh',
-                                            overflow: 'auto',
-                                            background: '#ffffff',
-                                        },
-                                        overlay: {
-                                            position: 'fixed',
-                                            inset: 0,
-                                            backgroundColor: '#ffffff',
-                                            zIndex: 9999,
-                                            margin: 0,
-                                            padding: 0,
-                                        }
-                                    }}
-                                >
-                                    <div ref={refFavorite} className='overflow-y-auto min-h-screen bg-white pb-20'>
-                                        <div className='pr-6'>
-                                            <div className='sticky top-0 bg-[#fff] z-50'>
-                                                <h6 className='text-[18px] text-center md:text-left text-[#333] font-bold p-3  px-5 border-b border-solid border-[#e8e8e8]'>Favoritos</h6>
-                                                {
-                                                    isMobile && <div className={styles.closeFavorites}>
-                                                        <Icon className='cursor-pointer absolute right-4 top-4' width={24} icon="ic:baseline-close" onClick={closeModal} />
-                                                    </div>
-                                                }
-                                            </div>
-                                            <div className="p-5">
-                                                {
-                                                    eventsOnlyFavorites.length > 0 ? eventsOnlyFavorites?.map((item: any, index: number) => (
-                                                        <div className="flex mt-2 mb-8 last:mb-0 relative w-full cursor-pointer group"
-                                                            onClick={() => navigateEvent(item)}
-                                                            key={index}
-                                                            onMouseEnter={() => setHoveredFavoriteId(item.idfavoritos)}
-                                                            onMouseLeave={() => setHoveredFavoriteId(null)}
-
-                                                        >
-                                                            <div className='w-[45px] h-[35px] mr-4'>
-                                                                <Image className='w-full h-full' width={45} height={45} src={item.url} alt="" />
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <p className='text-[13px] font-bold text-[#4a4a4a]'>{moment(item.FechaInicio).utcOffset(-5).format('D MMM').toUpperCase()} - {item.HoraInicio} - {item.HoraFinal}</p>
-                                                                <h3 className='group-hover:text-[#037BA1] transition duration-100 font-bold mb-0 text-md text-[#212121] text-ellipsis max-w-[250px] overflow-hidden whitespace-nowrap'>{item.titulo}</h3>
-                                                                <p className='font-normal text-[13px]'>{item.NombreLocal}</p>
-                                                            </div>
-
-                                                            {/* Mobile delete button - always visible */}
-                                                            {isMobile && (
-                                                                <button
-                                                                    className='absolute right-0 top-0 p-2 z-50'
-                                                                    onClick={(e: any) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        deleteFavorites(e, item);
-                                                                    }}
-                                                                >
-                                                                    <Icon icon="ic:baseline-close" width={20} />
-                                                                </button>
-                                                            )}
-
-                                                            {/* Desktop delete button - show on hover */}
-                                                            {!isMobile && (
-                                                                <Icon
-                                                                    className={`absolute right-0 top-0 transition-opacity duration-200 ${hoveredFavoriteId === item.idfavoritos ? "opacity-100" : "opacity-0"}`}
-                                                                    icon="ic:baseline-close"
-                                                                    onClick={(e: any) => {
-                                                                        e.stopPropagation();
-                                                                        deleteFavorites(e, item);
-                                                                    }}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    )) :
-
-                                                        <div className='p-10 px-16 py-20 relative z-50 text-center mx-auto flex justify-center'>
-                                                            <div>
-                                                                <Image src={calendar} alt="" className='mb-6 text-center mx-auto' width={60} height={60} />
-                                                                <strong className='text-[16px]'>Aún no tienes eventos favoritos</strong>
-                                                                <p className='text-[14px] mt-2'>En cuanto los tengas, podrás verlos aquí</p>
-                                                            </div>
-                                                        </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </ReactModal>
-                            )
-                        }
+                        )}
                     </div>
 
-                    {
-                        isOpenFavorite && (
-                            <div
-                                ref={refFavorite}
-                                className={"hidden md:block md:left-auto left-0 w-full md:w-[430px] overflow-hidden md:overflow-y-auto md:max-h-auto max-h-[400px] overflow-y-scroll md:shadow-custom-2 bg-[#fff] md:rounded-xl md:top-14 absolute md:right-0 z-50 md:after:absolute md:after:top-[-10px] md:after:right-[10px] md:after:mx-auto md:after:w-[1px] md:after:border-b-[11px] md:after:border-b-white md:after:border-l-[11px] md:after:border-l-transparent md:after:border-r-[11px] md:after:border-r-transparent md:after:content-['']"}
-                            >
-                                <ul>
-                                    <div>
-                                        <div>
-                                            <h6 className='text-[18px] text-center md:text-left text-[#333] font-bold p-3 px-5 border-b border-solid border-[#e8e8e8]'>Favoritos</h6>
-                                            {
-                                                isMobile && <div>
-                                                    <Icon className='cursor-pointer absolute right-4 top-4' width={24} icon="ic:baseline-close" onClick={() => setIsOpenFavorite(false)} />
-                                                </div>
-                                            }
-                                        </div>
-                                        <div className="p-5">
-                                            {
-                                                eventsOnlyFavorites.length > 0 ? eventsOnlyFavorites?.map((item: any, index: number) => (
-                                                    <div className="flex mt-2 mb-8 last:mb-0 relative w-full cursor-pointer group"
-                                                        onClick={() => navigateEvent(item)}
-                                                        key={index}
-                                                        onMouseEnter={() => setHoveredFavoriteId(item.idfavoritos)}
-                                                        onMouseLeave={() => setHoveredFavoriteId(null)}
+                    {/* Account */}
+                    {auth ? (
+                        <div className="relative" ref={userRef}>
+                            <button type="button" onClick={() => setIsUserOpen((v) => !v)} aria-expanded={isUserOpen} aria-label="Menú de tu cuenta"
+                                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ring-1 ring-line hover:ring-brand">
+                                <img src={avatar} alt="" className="h-full w-full object-cover" />
+                            </button>
+                            {isUserOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-60 rounded-card border border-line bg-white py-2 shadow-float">
+                                    <p className="truncate px-4 pb-2 pt-1 text-caption text-ink-soft">{auth.email}</p>
+                                    {userLinks.map((l) => (
+                                        <Link key={l.href} href={l.href} onClick={() => setIsUserOpen(false)}
+                                            className="flex items-center gap-3 px-4 py-2.5 text-label font-medium text-ink hover:bg-canvas hover:text-brand">
+                                            <Icon icon={l.icon} width={20} className="text-brand" aria-hidden />
+                                            {l.label}
+                                        </Link>
+                                    ))}
+                                    <button type="button" onClick={logoutUser}
+                                        className="mt-1 flex w-full items-center gap-3 border-t border-line px-4 pb-1 pt-3 text-label font-medium text-brand-wine hover:bg-canvas">
+                                        <Icon icon="solar:logout-2-linear" width={20} aria-hidden />
+                                        Cerrar sesión
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <button type="button" onClick={() => openAuthModal(false)} className="btn-primary btn-sm hidden sm:inline-flex">
+                            Ingresar
+                        </button>
+                    )}
 
-                                                    >
-                                                        <div className='w-[45px] h-[35px] mr-4'>
-                                                            <Image className='w-full h-full' width={45} height={45} src={item.url} alt="" />
-                                                        </div>
-                                                        <div>
-                                                            <p className='text-[13px] font-bold text-[#4a4a4a]'>{moment(item.FechaInicio).utc().format('D MMM').toUpperCase()} - {item.HoraInicio} - {item.HoraFinal}</p>
-                                                            <h3 className='group-hover:text-[#037BA1] transition duration-100 font-bold mb-0 text-md text-[#212121] text-ellipsis w-[310px] overflow-hidden whitespace-nowrap'>{item.titulo}</h3>
-                                                            <p className='font-normal text-[13px]'>{item.NombreLocal}</p>
-                                                        </div>
-
-                                                        {
-                                                            isMobile && <Icon className='absolute right-0 top-0' icon="ic:baseline-close" onClick={(e: any) => deleteFavorites(e, item)} />
-                                                        }
-
-                                                        <Icon
-                                                            className={`absolute right-0 top-0 transition-opacity duration-200 ${hoveredFavoriteId === item.idfavoritos ? "opacity-100" : "opacity-0"
-                                                                }`}
-                                                            icon="ic:baseline-close"
-                                                            onClick={(e: any) => {
-                                                                e.stopPropagation(); // Evita que el evento alcance otros handlers
-                                                                deleteFavorites(e, item);
-                                                            }}
-                                                        />
-                                                    </div>
-                                                )) :
-
-                                                    <div className='p-10 px-16 py-20 relative z-50 text-center mx-auto flex justify-center'>
-                                                        <div>
-                                                            <Image src={calendar} alt="" className='mb-6 text-center mx-auto' width={60} height={60} />
-                                                            <strong className='text-[16px]'>Aún no tienes eventos favoritos</strong>
-                                                            <p className='text-[14px] mt-2'>En cuanto los tengas, podrás verlos aquí</p>
-                                                        </div>
-                                                    </div>
-                                            }
-                                        </div>
-                                    </div>
-                                </ul>
-                            </div>
-                        )
-                    }
+                    <button type="button" onClick={() => { if (!countsCategories) getCategoriesCount(); setMobileMenu(true); }} aria-label="Abrir menú" aria-expanded={mobileMenu}
+                        className="flex h-10 w-10 items-center justify-center rounded-full text-ink hover:bg-canvas lg:hidden">
+                        <Icon icon="solar:hamburger-menu-linear" width={24} />
+                    </button>
                 </div>
             </div>
-        </div>
+
+            {/* Mobile full-screen search */}
+            {mobileSearch && (
+                <div className="fixed inset-0 z-50 flex flex-col bg-white md:hidden" role="dialog" aria-modal="true" aria-label="Buscar eventos">
+                    <form role="search" onSubmit={(e) => { e.preventDefault(); search.submit(); }} className="flex items-center gap-2 border-b border-line px-4 py-3">
+                        <Icon icon="solar:magnifer-linear" width={20} className="text-brand-gray" aria-hidden />
+                        <input autoFocus type="search" value={search.term} onChange={(e) => search.setTerm(e.target.value)}
+                            placeholder="Busca un evento, artista o lugar" aria-label="Buscar eventos o lugares"
+                            className="h-10 flex-1 bg-transparent text-body text-ink placeholder:text-brand-gray focus:outline-none" />
+                        <button type="button" onClick={() => { setMobileSearch(false); search.setTerm(''); }} className="btn-ghost btn-sm">Cancelar</button>
+                    </form>
+                    <div className="flex-1 overflow-y-auto">
+                        <SearchResults term={search.term} onPick={(t) => { search.remember(t); setMobileSearch(false); }} />
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile / tablet menu */}
+            {mobileMenu && (
+                <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menú">
+                    <button type="button" className="absolute inset-0 bg-ink/40" aria-label="Cerrar menú" onClick={() => setMobileMenu(false)} />
+                    <div className="absolute right-0 top-0 flex h-full w-[min(88vw,360px)] flex-col overflow-y-auto bg-white">
+                        <div className="flex h-16 items-center justify-between border-b border-line px-4">
+                            <Image src={logo} alt="Injoyplan" className="h-auto w-[120px]" />
+                            <button type="button" onClick={() => setMobileMenu(false)} aria-label="Cerrar menú" className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-canvas">
+                                <Icon icon="solar:close-circle-linear" width={24} />
+                            </button>
+                        </div>
+                        <nav aria-label="Menú móvil" className="flex flex-col gap-1 p-4">
+                            {NAV.map((n) => (
+                                <Link key={n.href} href={n.href} className={`rounded-control px-3 py-3 text-body font-semibold ${isActive(n.href) ? 'bg-brand-mist text-brand-deep' : 'text-ink'}`}>{n.label}</Link>
+                            ))}
+                        </nav>
+                        {categories.length > 0 && (
+                            <div className="border-t border-line p-4">
+                                <p className="mb-3 text-caption font-semibold text-ink-soft">Categorías</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.map((c) => (
+                                        <Link key={c.idCategorias} href={searchPath({ categoria: c.nombreCategoria })} onClick={() => track('select_category', { category: c.nombreCategoria })} className="chip">{c.nombreCategoria}</Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="mt-auto flex flex-col gap-2 border-t border-line p-4">
+                            <button type="button" onClick={() => { setMobileMenu(false); publishEvent(); }} className="btn-secondary">
+                                <Icon icon="solar:add-circle-linear" width={18} aria-hidden />
+                                Publica tu evento
+                            </button>
+                            {!auth && (
+                                <button type="button" onClick={() => { setMobileMenu(false); openAuthModal(false); }} className="btn-primary">Ingresar</button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </header>
     )
 }
 

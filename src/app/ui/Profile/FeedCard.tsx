@@ -5,10 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from '@iconify/react';
 import { useAuthStore } from '@/app/zustand/auth';
-import moment from "moment";
-import 'moment/locale/es';
+import dayjs from '@/app/utils/date';
 import { getProfileAssets } from '@/app/utils/profileAssets';
 import { Event } from "@/app/interfaces/event";
+import { eventPath } from '@/app/utils/urls';
 
 interface FeedCardProps {
     event: Event;
@@ -29,10 +29,9 @@ export default function FeedCard({
 }: FeedCardProps) {
 
     // Calculate "time ago" or formatted date for top pill
-    moment.locale('es');
     const timeDisplay = event.createdAt
-        ? moment(event.createdAt).fromNow()
-        : moment(event.FechaInicio).format('D MMM');
+        ? dayjs(event.createdAt).fromNow()
+        : dayjs(event.FechaInicio).format('D MMM');
 
     // Optimistic State
     const [localIsFavorite, setLocalIsFavorite] = useState(isFavorite);
@@ -114,7 +113,7 @@ export default function FeedCard({
             <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
 
                 {/* Title */}
-                <Link href={`/evento/${event.idEventos || event.ideventos}/${event.idfecha}`}>
+                <Link href={eventPath(event.idEventos || event.ideventos, event.titulo, event.idfecha)}>
                     <h3 className="text-white text-xl font-bold leading-tight mb-1 line-clamp-2 hover:underline decoration-[#fff]/50 cursor-pointer text-shadow">
                         {event.titulo}
                     </h3>
@@ -143,14 +142,14 @@ export default function FeedCard({
                         </button>
 
                         {/* Comments */}
-                        <Link href={`/evento/${event.idEventos || event.ideventos}/${event.idfecha}`} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+                        <Link href={eventPath(event.idEventos || event.ideventos, event.titulo, event.idfecha)} className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
                             <Icon icon="solar:chat-round-dots-linear" className="text-white" width={24} />
                             <span className="text-white font-bold text-sm">{commentsCount}</span>
                         </Link>
                     </div>
 
                     {/* Edit Button (Owner Only) */}
-                    {/* {(auth as any)?.id === owner?.id && (
+                    {/* {auth?.id === owner?.id && (
                         <Link
                             href={`/perfil/crear-evento?edit=${event.id}`}
                             className="bg-[#F0F7FA] text-[#007FA4] w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#E0F2F7] transition-colors"
@@ -162,7 +161,7 @@ export default function FeedCard({
 
                     {/* CTA Button */}
                     <Link
-                        href={`/evento/${event.idEventos || event.ideventos}/${event.idfecha}`}
+                        href={eventPath(event.idEventos || event.ideventos, event.titulo, event.idfecha)}
                         className="bg-white text-black font-extrabold text-xs px-5 py-2.5 rounded-full hover:bg-gray-100 transition-colors shadow-lg"
                     >
                         Ver más

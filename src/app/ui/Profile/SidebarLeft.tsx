@@ -25,9 +25,6 @@ export default function SidebarLeft() {
     }
 
     const onLogout = () => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-        }
         logout();
         router.push('/');
     }

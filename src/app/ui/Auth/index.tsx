@@ -398,7 +398,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                             <p className="text-gray-500 mb-6">Tu cuenta ha sido verificada correctamente.</p>
                             <button
                                 onClick={() => setShowConfetti(false)}
-                                className="bg-[#277FA4] hover:bg-[#206a8a] text-white font-bold py-2 px-6 rounded-full transition-colors"
+                                className="bg-brand hover:bg-brand-deep text-white font-bold py-2 px-6 rounded-full transition-colors"
                             >
                                 Continuar
                             </button>
@@ -496,11 +496,11 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsForgotPassword(false)}
-                                                    className="flex items-center gap-1 text-[#007FA4] text-sm font-bold mb-4 hover:underline"
+                                                    className="flex items-center gap-1 text-brand text-sm font-bold mb-4 hover:underline"
                                                 >
                                                     <Icon icon="solar:arrow-left-linear" /> Volver
                                                 </button>
-                                                <h2 className="text-2xl font-bold text-[#212121] mb-2">Recuperar contraseña</h2>
+                                                <h2 className="text-2xl font-bold text-ink mb-2">Recuperar contraseña</h2>
                                                 <p className="text-gray-500 text-sm">Ingresa tu correo electrónico para enviarte las instrucciones.</p>
                                             </div>
 
@@ -511,7 +511,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                         type="email"
                                                         value={email}
                                                         onChange={(e) => setEmail(e.target.value)}
-                                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#007FA4] focus:ring-1 focus:ring-[#007FA4] transition-all"
+                                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-[#007FA4] transition-all"
                                                         placeholder="ejemplo@correo.com"
                                                         required
                                                     />
@@ -519,7 +519,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                             </div>
 
                                             <div className="pt-4">
-                                                <button type="submit" className="w-full bg-[#277FA4] hover:bg-[#277FA4] text-[#fff] font-bold py-3.5 rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-95 text-sm">
+                                                <button type="submit" className="w-full bg-brand hover:bg-brand-deep text-[#fff] font-bold py-3.5 rounded-control transition-colors active:scale-[0.98] text-sm">
                                                     Enviar instrucciones
                                                 </button>
                                             </div>
@@ -529,7 +529,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                                 <Icon icon="solar:letter-bold" className="text-green-500 text-4xl" />
                                             </div>
-                                            <h2 className="text-xl font-bold text-[#212121] mb-2">¡Correo enviado!</h2>
+                                            <h2 className="text-xl font-bold text-ink mb-2">¡Correo enviado!</h2>
                                             <p className="text-gray-500 text-sm mb-6">
                                                 Hemos enviado las instrucciones para recuperar tu contraseña a <span className="font-bold">{email}</span>. Revisa tu bandeja de entrada o spam.
                                             </p>
@@ -537,7 +537,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsForgotPassword(false)}
-                                                    className="w-full bg-[#277FA4] hover:bg-[#277FA4] text-[#fff] font-bold py-3.5 rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-95 text-sm"
+                                                    className="w-full bg-brand hover:bg-brand-deep text-[#fff] font-bold py-3.5 rounded-control transition-colors active:scale-[0.98] text-sm"
                                                 >
                                                     Volver a iniciar sesión
                                                 </button>
@@ -556,7 +556,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                     </div>
 
                                     <div>
-                                        <h2 className="text-2xl font-bold text-[#212121] mb-2">Inicia Sesión</h2>
+                                        <h2 className="text-2xl font-bold text-ink mb-2">Inicia Sesión</h2>
                                         <p className="text-gray-500 text-sm">Por favor, ingresa tus datos.</p>
                                     </div>
 
@@ -574,7 +574,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                 type="email"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#007FA4] focus:ring-1 focus:ring-[#007FA4] transition-all"
+                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-[#007FA4] transition-all"
                                                 placeholder="ejemplo@correo.com"
                                                 required
                                             />
@@ -585,7 +585,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                 type="password"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#007FA4] focus:ring-1 focus:ring-[#007FA4] transition-all"
+                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-[#007FA4] transition-all"
                                                 placeholder="••••••••"
                                                 required
                                             />
@@ -596,19 +596,19 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                         <button
                                             type="button"
                                             onClick={() => setIsForgotPassword(true)}
-                                            className="text-xs font-bold text-[#007FA4] hover:underline"
+                                            className="text-xs font-bold text-brand hover:underline"
                                         >
                                             ¿Olvidaste tu contraseña?
                                         </button>
                                     </div>
 
-                                    <button type="submit" className="w-full bg-[#277FA4] hover:bg-[#277FA4] text-[#fff] font-bold py-3.5 rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-95 text-sm">
+                                    <button type="submit" className="w-full bg-brand hover:bg-brand-deep text-[#fff] font-bold py-3.5 rounded-control transition-colors active:scale-[0.98] text-sm">
                                         Continuar
                                     </button>
 
                                     <div className="text-center mt-6">
                                         <p className="text-sm text-gray-500">
-                                            ¿Aún no tienes cuenta? <button type="button" onClick={() => setIsRegister(true)} className="text-[#007FA4] font-bold hover:underline">Regístrate</button>
+                                            ¿Aún no tienes cuenta? <button type="button" onClick={() => setIsRegister(true)} className="text-brand font-bold hover:underline">Regístrate</button>
                                         </p>
                                     </div>
                                 </form>
@@ -623,7 +623,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                     </div>
 
                                     <div>
-                                        <h2 className="text-2xl font-bold text-[#212121] mb-2">Regístrate</h2>
+                                        <h2 className="text-2xl font-bold text-ink mb-2">Regístrate</h2>
                                         <p className="text-gray-500 text-sm">Ingresa tus datos para comenzar.</p>
                                     </div>
 
@@ -640,7 +640,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                             <input
                                                 value={nombre}
                                                 onChange={(e) => setNombre(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#007FA4]"
+                                                className="w-full border border-gray-300 rounded-control px-4 py-3 text-sm focus:outline-none focus:border-brand"
                                                 required
                                             />
                                         </div>
@@ -649,7 +649,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                             <input
                                                 value={apellido}
                                                 onChange={(e) => setApellido(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#007FA4]"
+                                                className="w-full border border-gray-300 rounded-control px-4 py-3 text-sm focus:outline-none focus:border-brand"
                                                 required
                                             />
                                         </div>
@@ -661,7 +661,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                             type="email"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#007FA4]"
+                                            className="w-full border border-gray-300 rounded-control px-4 py-3 text-sm focus:outline-none focus:border-brand"
                                             required
                                         />
                                     </div>
@@ -673,7 +673,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                 type="password"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#007FA4]"
+                                                className="w-full border border-gray-300 rounded-control px-4 py-3 text-sm focus:outline-none focus:border-brand"
                                                 required
                                             />
                                         </div>
@@ -683,7 +683,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                 type="password"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#007FA4]"
+                                                className="w-full border border-gray-300 rounded-control px-4 py-3 text-sm focus:outline-none focus:border-brand"
                                                 required
                                             />
                                         </div>
@@ -696,7 +696,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                 type="date"
                                                 value={f_nacimiento}
                                                 onChange={(e) => setF_nacimiento(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#007FA4]"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-brand"
                                             />
                                         </div>
                                         <div className="space-y-1">
@@ -704,7 +704,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                             <select
                                                 value={genero}
                                                 onChange={(e) => setGenero(e.target.value)}
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#007FA4]"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-brand"
                                             >
                                                 <option>Seleccionar</option>
                                                 <option>Masculino</option>
@@ -722,12 +722,12 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                     type="checkbox"
                                                     checked={terminoCondiciones}
                                                     onChange={(e) => setTerminoCondiciones(e.target.checked)}
-                                                    className="w-4 h-4 text-[#00DFD1] border-gray-300 rounded focus:ring-[#00DFD1]"
+                                                    className="w-4 h-4 text-brand border-gray-300 rounded focus:ring-brand"
                                                 />
                                             </div>
                                             <div className="ml-0 text-xs">
                                                 <label htmlFor="terms" className="font-medium text-gray-700">
-                                                    Declaro que he leído y acepto los <a href="/terminos-y-condiciones" target="_blank" className="text-[#007FA4] font-bold hover:underline">Términos y Condiciones</a>, la <a href="/politicas-cookies" target="_blank" className="text-[#007FA4] font-bold hover:underline">Política de cookies</a> y la <a href="/politicas-privacidad" target="_blank" className="text-[#007FA4] font-bold hover:underline">Política de privacidad</a> y autorizo el tratamiento de mis datos personales para la prestación del servicio ofrecido por esta plataforma
+                                                    Declaro que he leído y acepto los <a href="/terminos-y-condiciones" target="_blank" className="text-brand font-bold hover:underline">Términos y Condiciones</a>, la <a href="/politicas-cookies" target="_blank" className="text-brand font-bold hover:underline">Política de cookies</a> y la <a href="/politicas-privacidad" target="_blank" className="text-brand font-bold hover:underline">Política de privacidad</a> y autorizo el tratamiento de mis datos personales para la prestación del servicio ofrecido por esta plataforma
                                                 </label>
                                             </div>
                                         </div>
@@ -738,7 +738,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                     type="checkbox"
                                                     checked={politica}
                                                     onChange={(e) => setPolitica(e.target.checked)}
-                                                    className="w-4 h-4 text-[#00DFD1] border-gray-300 rounded focus:ring-[#00DFD1]"
+                                                    className="w-4 h-4 text-brand border-gray-300 rounded focus:ring-brand"
                                                 />
                                             </div>
                                             <div className="ml-0 text-xs">
@@ -749,13 +749,13 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                         </div>
                                     </div>
 
-                                    <button type="submit" className="w-full bg-[#277FA4] hover:bg-[#277FA4] text-[#fff] font-bold py-3.5 rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-95 text-sm">
+                                    <button type="submit" className="w-full bg-brand hover:bg-brand-deep text-[#fff] font-bold py-3.5 rounded-control transition-colors active:scale-[0.98] text-sm">
                                         Continuar
                                     </button>
 
                                     <div className="text-center mt-6">
                                         <p className="text-sm text-gray-500">
-                                            ¿Ya tienes cuenta? <button type="button" onClick={() => setIsRegister(false)} className="text-[#007FA4] font-bold hover:underline">Inicia Sesión</button>
+                                            ¿Ya tienes cuenta? <button type="button" onClick={() => setIsRegister(false)} className="text-brand font-bold hover:underline">Inicia Sesión</button>
                                         </p>
                                     </div>
                                 </form>
@@ -768,15 +768,15 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                         <button
                                             type="button"
                                             onClick={() => setStep(0)}
-                                            className="flex items-center gap-1 text-[#007FA4] text-sm font-bold mb-4 hover:underline"
+                                            className="flex items-center gap-1 text-brand text-sm font-bold mb-4 hover:underline"
                                         >
                                             <Icon icon="solar:arrow-left-linear" /> Volver
                                         </button>
 
-                                        <h2 className="text-2xl font-bold text-[#212121] mb-2">Verifica tu email</h2>
+                                        <h2 className="text-2xl font-bold text-ink mb-2">Verifica tu email</h2>
                                         <p className="text-gray-500 text-sm">
                                             Hemos enviado un código de verificación a: <br />
-                                            <span className="font-bold text-[#212121]">{email}</span>
+                                            <span className="font-bold text-ink">{email}</span>
                                         </p>
                                     </div>
 
@@ -795,7 +795,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                                                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                                                     onPaste={handleOtpPaste}
-                                                    className="flex-1 min-w-0 max-w-[48px] h-12 border border-gray-300 rounded-lg text-center text-xl font-bold focus:outline-none focus:border-[#007FA4] focus:ring-1 focus:ring-[#007FA4] transition-all"
+                                                    className="flex-1 min-w-0 max-w-[48px] h-12 border border-gray-300 rounded-lg text-center text-xl font-bold focus:outline-none focus:border-brand focus:ring-1 focus:ring-[#007FA4] transition-all"
                                                 />
                                             ))}
                                         </div>
@@ -805,7 +805,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                         type="submit"
                                         disabled={otp.join('').length !== 6}
                                         className={`w-full font-bold py-3.5 rounded-xl shadow-md transition-all transform active:scale-95 text-sm ${otp.join('').length === 6
-                                            ? 'bg-[#00DFD1] hover:bg-[#00c9bd] text-[#004e4e] hover:shadow-lg'
+                                            ? 'bg-brand hover:bg-brand-deep text-white hover:shadow-lg'
                                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                             }`}
                                     >
@@ -818,7 +818,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                             type="button"
                                             onClick={handleResendCode}
                                             disabled={resendCountdown > 0}
-                                            className={`font-bold hover:underline ${resendCountdown > 0 ? "text-gray-400 cursor-not-allowed" : "text-[#007FA4]"
+                                            className={`font-bold hover:underline ${resendCountdown > 0 ? "text-gray-400 cursor-not-allowed" : "text-brand"
                                                 }`}
                                         >
                                             {resendCountdown > 0 ? `Reenviar en ${resendCountdown}s` : "Reenviar"}
@@ -833,7 +833,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                     <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <Image src={logo} width={100} height={100} alt="Logo" />
                                     </div>
-                                    <h2 className="text-3xl font-bold text-[#212121] mb-2">¡Bienvenido a Injoyplan!</h2>
+                                    <h2 className="text-3xl font-bold text-ink mb-2">¡Bienvenido a Injoyplan!</h2>
                                     <p className="text-gray-500 text-sm mb-8 px-4">
                                         Tu perfil ha sido creado con éxito.<br />
                                         Solo necesitamos algunos datos más para completarlo al 100%. ¿Te gustaría añadirlos ahora?
@@ -842,13 +842,13 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                     <div className="space-y-4 max-w-xs mx-auto relative z-10">
                                         <button
                                             onClick={handleCompleteProfile}
-                                            className="w-full bg-[#277FA4] hover:bg-[#00c9bd] text-[#fff] font-bold py-3.5 rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-95 text-sm"
+                                            className="w-full bg-brand hover:bg-brand-deep text-[#fff] font-bold py-3.5 rounded-control transition-colors active:scale-[0.98] text-sm"
                                         >
                                             Completar mi perfil
                                         </button>
                                         <button
                                             onClick={() => setStep(3)} // Go to Interests Step
-                                            className="w-full text-[#007FA4] font-bold py-2 hover:underline text-sm"
+                                            className="w-full text-brand font-bold py-2 hover:underline text-sm"
                                         >
                                             Seleccionar mis gustos
                                         </button>
@@ -883,7 +883,7 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                             {isRegister && step === 3 && (
                                 <div className="animate-fadeIn w-full">
                                     <div className="text-center mb-6">
-                                        <h2 className="text-2xl font-bold text-[#212121] mb-2">¡Queremos conocerte!</h2>
+                                        <h2 className="text-2xl font-bold text-ink mb-2">¡Queremos conocerte!</h2>
                                         <p className="text-gray-500 text-sm">Elige tus intereses para personalizar tu experiencia.</p>
                                     </div>
 
@@ -914,13 +914,13 @@ export default function Auth({ openAuth, setOpenAuth, isRegister: isRegisterProp
                                     <div className="mt-8 space-y-3">
                                         <button
                                             onClick={handleFinishOnboarding}
-                                            className="w-full bg-[#277FA4] text-white font-bold py-3.5 rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-95 text-sm"
+                                            className="w-full bg-brand hover:bg-brand-deep text-white font-bold py-3.5 rounded-control transition-colors active:scale-[0.98] text-sm"
                                         >
                                             Finalizar
                                         </button>
                                         <button
                                             onClick={handleFinishOnboarding}
-                                            className="w-full text-[#007FA4] font-bold text-xs hover:underline block text-center"
+                                            className="w-full text-brand font-bold text-xs hover:underline block text-center"
                                         >
                                             Omitir por ahora
                                         </button>

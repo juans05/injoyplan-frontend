@@ -12,6 +12,7 @@ import { useCategoriesState } from '@/app/zustand/categories';
 import { useEventCreateStore } from '@/app/zustand/eventCreate';
 import { get } from '@/app/utils/fetch';
 import ubigeoData from '@/data/ubigeo.json';
+import { eventPath } from '@/app/utils/urls';
 
 type DateForm = {
   date: string;
@@ -41,7 +42,7 @@ function CrearEventoContent() {
   const [openAuth, setOpenAuth] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
 
-  const isCompany = (auth as any)?.userType === 'COMPANY';
+  const isCompany = auth?.userType === 'COMPANY';
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
@@ -577,7 +578,7 @@ function CrearEventoContent() {
                   // Navigate to detail page
                   const dateId = resp?.dates?.[0]?.id;
                   if (dateId) {
-                    router.push(`/evento/${resp.id}/${dateId}`);
+                    router.push(eventPath(resp.id, resp.title, dateId));
                   } else {
                     router.push('/perfil');
                   }

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import jsPDF from 'jspdf';
+import type { jsPDF as JsPDF } from 'jspdf';
 import styles from './book.module.css';
 import libro from './../../../public/svg/claims.svg';
 import Image from 'next/image';
@@ -35,9 +35,11 @@ const modalStyles = {
 };
 
 const SuccessModal = ({ isOpen, onClose, data }: { isOpen: boolean; onClose: () => void; data: any }) => {
-    const generatePDF = () => {
+    const generatePDF = async () => {
         if (!data) return;
-        const doc = new jsPDF();
+        // jspdf is ~130 kB: only load it when the user downloads the PDF
+        const { jsPDF } = await import('jspdf');
+        const doc: JsPDF = new jsPDF();
 
         // Helper to draw cell with label and value
         const drawCell = (x: number, y: number, w: number, h: number, label: string, value: string = '') => {
@@ -317,7 +319,6 @@ const ClaimsBook = () => {
         : [];
 
     const districts = formData.consumerProvince && formData.consumerDepartment && ubigeoData[formData.consumerDepartment as keyof typeof ubigeoData]
-        // @ts-ignore
         ? ubigeoData[formData.consumerDepartment][formData.consumerProvince] || []
         : [];
 
@@ -329,7 +330,6 @@ const ClaimsBook = () => {
         : [];
 
     const repDistricts = formData.repProvince && formData.repDepartment && ubigeoData[formData.repDepartment as keyof typeof ubigeoData]
-        // @ts-ignore
         ? ubigeoData[formData.repDepartment][formData.repProvince] || []
         : [];
 

@@ -15,6 +15,7 @@ import type { UserDTO } from '@/app/interfaces/user';
 import SidebarLeft from '@/app/ui/Profile/SidebarLeft';
 import SidebarRight from '@/app/ui/Profile/SidebarRight';
 import { getProfileAssets } from '@/app/utils/profileAssets';
+import { eventPath } from '@/app/utils/urls';
 
 const modalStyles = {
   content: {
@@ -44,7 +45,7 @@ function UserRow({ user }: { user: UserDTO }) {
   return (
     <Link href={`/usuario/${user.id}`} className="flex items-center gap-3 p-4 border-b border-solid border-[#EDEFF5]">
       <div className="w-10 h-10 rounded-full overflow-hidden border border-solid border-[#EDEFF5] bg-[#F7F7F7]">
-        <img src={avatar} alt={name} className="w-full h-full object-cover" />
+        <img loading="lazy" src={avatar} alt={name} className="w-full h-full object-cover" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="font-bold text-[#212121] truncate">{name}</p>
@@ -130,14 +131,14 @@ export default function UsuarioPage() {
 
             <div className="bg-white border border-solid border-[#EDEFF5] rounded-2xl overflow-hidden shadow-sm">
               <div className="relative h-[160px] md:h-[220px] bg-[#EEE]">
-                <img src={coverSrc} alt="Portada" className="w-full h-full object-cover" />
+                <img loading="lazy" src={coverSrc} alt="Portada" className="w-full h-full object-cover" />
               </div>
 
               <div className="px-6 md:px-8">
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between">
                   <div className="-mt-10 md:-mt-14 flex items-end gap-4 relative z-10">
                     <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-white bg-[#F7F7F7]">
-                      <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
+                      <img loading="lazy" src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
                     </div>
 
                   </div>
@@ -247,7 +248,7 @@ export default function UsuarioPage() {
                       return (
                         <div key={event.id} className="relative aspect-square bg-[#F7F7F7] overflow-hidden group rounded-lg">
                           <Link
-                            href={event.dates?.[0]?.id ? `/evento/${event.id}/${event.dates[0].id}` : `/evento/${event.id}`}
+                            href={eventPath(event.id, event.title, event.dates?.[0]?.id)}
                             className="block w-full h-full"
                           >
                             {event.imageUrl ? (

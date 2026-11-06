@@ -3,22 +3,22 @@ import styles from './condition.module.css'
 import terms from './../../../public/svg/terms.svg'
 import Link from 'next/link'
 import Image from 'next/image'
-import { quicksand, sans } from '../../../public/fonts'
+import { jakarta } from '../../../public/fonts';
 
 const TermsAndConditions = () => {
     return (
         <div className="">
             <div className='bg-[#F8FAFB]'>
-                <div className="pt-10 max-w-screen-md mx-auto flex items-center justify-start md:px-0 px-10">
+                <div className="pt-10 max-w-screen-md mx-auto flex items-center justify-start md:px-8 xl:px-0 px-10">
                     <div>
                         <Image src={terms} alt="termsimg" className='w-full' />
                     </div>
                     <div>
-                        <h3 className={`${quicksand.className} md:ml-28 ml-10 text-3xl font-bold text-[#9B292B]`}>Términos y condiciones de uso</h3>
+                        <h3 className={`${jakarta.className} md:ml-28 ml-10 text-3xl font-bold text-[#9B292B]`}>Términos y condiciones de uso</h3>
                     </div>
                 </div>
             </div>
-            <div className={`${sans.className} max-w-screen-2xl md:w-[1200px] md:mt-20 mt-12 mx-auto mb-10 md:px-0 px-5`}>
+            <div className={`${jakarta.className} max-w-[1200px] md:mt-20 mt-12 mx-auto mb-10 md:px-8 xl:px-0 px-5`}>
                 <div>
                     <h5 className='font-bold mb-6 md:text-[16px] text-[14px]'>1. Determinación de datos de identificación</h5>
                     <p className='font-normal md:text-md text-[14px]'>Usted está visitando la página web de INJOYPLAN (el “Sitio Web o la Aplicación”), de titularidad de INJOYPLAN S.A.C., con RUC N° 20603074956, con domicilio en Jr. Guillermo Brenner Mz. B Lote 1, Urbanización Bayer, distrito de Santiago de Surco, provincia y departamento de Lima (En adelante INJOYPLAN). <br />
@@ -98,7 +98,7 @@ const TermsAndConditions = () => {
                         <br />
                         INJOYPLAN puede solicitar el cambio de un nombre de Usuario y contraseña cuando considere que la cuenta ya no es segura, o si se recibe alguna queja o denuncia respecto al nombre de un Usuario que viole derechos de terceros. <br />
                         <br />
-                        Las comunicaciones concernientes a la administración de la contraseña pueden ser enviadas a <Link className="font-bold text-[#007FA4]" href="/contacto">contacto@injoyplan.com</Link> <br />
+                        Las comunicaciones concernientes a la administración de la contraseña pueden ser enviadas a <Link className="font-bold text-[#007FA4]" href="mailto:contacto@injoyplan.com">contacto@injoyplan.com</Link> <br />
                         <br /></p>
                 </div>
                 <div>
@@ -110,9 +110,9 @@ const TermsAndConditions = () => {
                         Asimismo, queda expresamente prohibida la utilización o reproducción de cualquier marca registrada, nombre comercial o logotipo que figure en el Sitio Web o la Aplicación sin la autorización previa y por escrito de INJOYPLAN, así como la utilización del software que opera el Sitio Web o la Aplicación con excepción de aquellos usos permitidos bajo estos Términos y Condiciones. <br />
                         <br />
                         Finalmente, quedan igualmente prohibidas a título enunciativo las siguientes prácticas: <br />
-                        La presentación de una página del Sitio Web o la Aplicación en una ventana que no pertenezca a INJOYPLAN, mediante la técnica denominada "framing" a no ser que se cuente con la autorización previa y por escrito de INJOYPLAN. <br />
+                        La presentación de una página del Sitio Web o la Aplicación en una ventana que no pertenezca a INJOYPLAN, mediante la técnica denominada &quot;framing&quot; a no ser que se cuente con la autorización previa y por escrito de INJOYPLAN. <br />
                         <br />
-                        La inserción de una imagen difundida en el Sitio Web o la Aplicación en una página no perteneciente a INJOYPLAN, mediante la técnica denominada "inline linking", si ello no cuenta con la autorización previa y por escrito de INJOYPLAN. <br />
+                        La inserción de una imagen difundida en el Sitio Web o la Aplicación en una página no perteneciente a INJOYPLAN, mediante la técnica denominada &quot;inline linking&quot;, si ello no cuenta con la autorización previa y por escrito de INJOYPLAN. <br />
                         <br /></p>
                 </div>
                 <div>
@@ -141,7 +141,7 @@ const TermsAndConditions = () => {
                     <p className='font-normal md:text-md text-[14px]'>El Usuario acepta expresamente que la dirección de correo electrónico consignada en el formulario de registro será el medio de contacto oficial entre el Sitio Web o la Aplicación y el Usuario, siendo absoluta responsabilidad de este último verificar que dicho correo electrónico esté siempre activo y funcional para poder recibir todas las comunicaciones procedentes del Sitio Web o la Aplicación. <br />
                         <br />
                         Los mensajes o comunicaciones del Sitio Web o la Aplicación a los Usuarios sólo pueden provenir de las páginas o cuentas oficiales de aquel en redes sociales u otros medios. En caso se detectará que algún Usuario está enviando comunicaciones o realizando publicaciones en nombre del Sitio Web o la Aplicación, INJOYPLAN iniciará las acciones correctivas y legales pertinentes a fin de proteger al resto de Usuarios de posibles riesgos de confusión.
-                        De otro lado, toda comunicación que el Usuario desee dirigir al Sitio Web o la Aplicación deberá realizarla a través de la siguiente dirección de correo electrónico: <Link className="font-bold text-[#007FA4]" href="/contacto">contacto@injoyplan.com</Link> <br />
+                        De otro lado, toda comunicación que el Usuario desee dirigir al Sitio Web o la Aplicación deberá realizarla a través de la siguiente dirección de correo electrónico: <Link className="font-bold text-[#007FA4]" href="mailto:contacto@injoyplan.com">contacto@injoyplan.com</Link> <br />
                         <br /></p>
                 </div>
                 <div>

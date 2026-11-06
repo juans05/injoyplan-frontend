@@ -1,6 +1,6 @@
 import privacy from './../../../public/svg/privacy.svg'
 import Image from 'next/image'
-import { quicksand, sans } from '../../../public/fonts'
+import { jakarta } from '../../../public/fonts';
 
 const Policy = () => {
     return (
@@ -11,11 +11,11 @@ const Policy = () => {
                         <Image src={privacy} alt="privacyimg" className='w-full' />
                     </div>
                     <div>
-                        <h3 className={`${quicksand.className} md:ml-28 ml-10 text-3xl font-bold text-[#9B292B]`}>Políticas de privacidad</h3>
+                        <h3 className={`${jakarta.className} md:ml-28 ml-10 text-3xl font-bold text-[#9B292B]`}>Políticas de privacidad</h3>
                     </div>
                 </div>
             </div>
-            <div className={`${sans.className} max-w-screen-2xl md:w-[1200px] px-5 md:px-0 md:mt-20 mt-12 mx-auto`}>
+            <div className={`${jakarta.className} max-w-[1200px] px-5 md:px-8 xl:px-0 md:mt-20 mt-12 mx-auto`}>
                 <div>
                     <h5 className='text-[#333] md:text-[16px] text-[14px] font-bold mb-6'>1. Legislación aplicable</h5>
                     <p className='text-[#333] md:text-[16px] text-[14px]'>La presente política de privacidad se encuentra sujeta a la legislación peruana y en particular a la Ley N° 29733, Ley de Protección de Datos Personales y el Decreto Supremo N° 003-2013-JUS, Reglamento de la Ley N° 29733. <br />

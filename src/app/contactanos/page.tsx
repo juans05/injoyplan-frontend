@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import styles from './center.module.css'
 import contact from './../../../public/svg/contact.svg'
-import { quicksand } from '../../../public/fonts'
+import { jakarta } from '../../../public/fonts';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ReactModal from 'react-modal';
@@ -122,10 +122,10 @@ const Center = () => {
             </div>
             <div className="mx-auto max-w-[700px] bg-[#fff] mt-16 mb-16 px-5 md:px-0">
                 <form onSubmit={handleSubmit}>
-                    <h5 className={quicksand.className + ' mb-10 font-bold md:text-[22px] text-[16px]'}>Déjanos un mensaje y pronto nos comunicaremos contigo.</h5>
+                    <h5 className={jakarta.className + ' mb-10 font-bold md:text-[22px] text-[16px]'}>Déjanos un mensaje y pronto nos comunicaremos contigo.</h5>
                     <div className='grid grid-cols-2 gap-x-10 gap-y-5'>
                         <div className='col-start-1 col-end-3'>
-                            <label className={quicksand?.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="nombre"><span className="text-[red]">* </span> Nombre completo</label>
+                            <label className={jakarta.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="nombre"><span className="text-[red]">* </span> Nombre completo</label>
                             <input
                                 className='rounded w-full p-2 mt-3 text-[14px] border border-solid border-[#0000001F] outline-none focus:border-[#277FA4]'
                                 type="text"
@@ -137,7 +137,7 @@ const Center = () => {
                             />
                         </div>
                         <div className='col-start-1 col-end-3 md:col-start-1 md:col-end-2'>
-                            <label className={quicksand?.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="correo"><span className="text-[red]">* </span> Correo de contacto</label>
+                            <label className={jakarta.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="correo"><span className="text-[red]">* </span> Correo de contacto</label>
                             <input
                                 className='rounded w-full p-2 mt-3 text-[14px] border border-solid border-[#0000001F] outline-none focus:border-[#277FA4]'
                                 type="email"
@@ -150,7 +150,7 @@ const Center = () => {
                             />
                         </div>
                         <div className='col-start-1 col-end-3 md:col-start-2 md:col-end-3'>
-                            <label className={quicksand?.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="telefono"><span className="text-[red]">* </span> Teléfono</label>
+                            <label className={jakarta.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="telefono"><span className="text-[red]">* </span> Teléfono</label>
                             <input
                                 className='rounded w-full p-2 mt-3 text-[14px] border border-solid border-[#0000001F] outline-none focus:border-[#277FA4]'
                                 type="tel"
@@ -162,7 +162,7 @@ const Center = () => {
                             />
                         </div>
                         <div className='col-start-1 col-end-3 md:col-start-1 md:col-end-2'>
-                            <label className={quicksand?.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="motivoMensaje"><span className="text-[red]">* </span> Motivo del mensaje</label>
+                            <label className={jakarta.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="motivoMensaje"><span className="text-[red]">* </span> Motivo del mensaje</label>
                             <select
                                 className='rounded w-full p-2 mt-3 text-[14px] border border-solid border-[#0000001F] outline-none focus:border-[#277FA4]'
                                 id="motivoMensaje"
@@ -178,7 +178,7 @@ const Center = () => {
                             </select>
                         </div>
                         <div className='col-start-1 col-end-3'>
-                            <label className={quicksand?.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="descripcion"><span className="text-[red]">* </span> Descripción</label>
+                            <label className={jakarta.className + ' font-normal md:text-[17px] text-[14px]  text-[#666]'} htmlFor="descripcion"><span className="text-[red]">* </span> Descripción</label>
                             <textarea
                                 id="descripcion"
                                 className='rounded w-full p-2 mt-3 h-40 text-[14px] border border-solid border-[#0000001F] outline-none focus:border-[#277FA4]'

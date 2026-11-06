@@ -6,7 +6,7 @@ import lupa from './../../../public/svg/search.svg'
 import plus from '../../../public/svg/plus.svg'
 import minus from '../../../public/svg/minus.svg' // Assuming we might want a minus icon, otherwise reuse plus with rotation
 import Image from 'next/image'
-import { quicksand } from '../../../public/fonts'
+import { jakarta } from '../../../public/fonts';
 import { Icon } from '@iconify/react/dist/iconify.js'; // Using Iconify as seen in other files for consistency if minus svg missing
 
 const faqs = [
@@ -149,10 +149,10 @@ const Quest = () => {
                 <div className="pt-10 max-w-screen-md mx-auto md:flex items-center justify-start pb-10 md:px-0 px-10">
                     <div className='flex items-center'>
                         <Image src={question} className='md:w-full w-3/12' alt="dreamimg" />
-                        <h3 className={`${quicksand.className} block ml-10 md:hidden text-3xl font-bold text-[#9B292B]`}>¿Preguntas? Busca aquí</h3>
+                        <h3 className={`${jakarta.className} block ml-10 md:hidden text-3xl font-bold text-[#9B292B]`}>¿Preguntas? Busca aquí</h3>
                     </div>
                     <div className='md:ml-28 ml-10 hidden md:block'>
-                        <h3 className={`${quicksand.className}  text-3xl font-bold text-[#9B292B]`}>¿Preguntas? Busca aquí</h3>
+                        <h3 className={`${jakarta.className}  text-3xl font-bold text-[#9B292B]`}>¿Preguntas? Busca aquí</h3>
                         <div className='relative justify-between top-10 border border-solid border-[#E8E8E8] bg-[#fff] flex p-3 rounded-full w-[450px]'>
                             <div>
                                 <input

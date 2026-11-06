@@ -3,16 +3,18 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm install -g pnpm # Instala pnpm globalmente
-        - pnpm install --frozen-lockfile # Instalar dependencias con pnpm
+        - npm install -g pnpm
+        - pnpm install --frozen-lockfile
     build:
       commands:
-        - pnpm build # Construye tu aplicación
+        # NEXT_PUBLIC_* vars must exist at build time (set them in Amplify > Environment variables)
+        - pnpm build
   artifacts:
-    baseDirectory: out # Cambia esto según la carpeta donde se genera tu aplicación
+    # Next.js SSR (dynamic routes, sitemap, generateMetadata) is served from .next, not a static export
+    baseDirectory: .next
     files:
       - '**/*'
   cache:
     paths:
-      - node_modules # Asegúrate de cachear las dependencias
-      - .pnpm-store
+      - node_modules/**/*
+      - .next/cache/**/*

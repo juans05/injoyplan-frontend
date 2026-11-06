@@ -23,7 +23,7 @@
 }
 
 .inicial_wrapper h3 {
-    font-family: quicksand;
+    font-family: inherit;
     font-weight: 700;
     font-size: 38px;
     color: #9B292B;
@@ -56,7 +56,7 @@
     border: none;
     position: relative;
     outline: none;
-    font-family: Quicksand;
+    font-family: inherit;
     padding: 15px 0px;
     font-size: 18px;
     color: #BABABA;
@@ -82,7 +82,7 @@
 }
 
 .quest_wrapper h3 {
-    font-family: open sans;
+    font-family: inherit;
     font-weight: 700;
     color: #333333;
     font-size: 18px;
@@ -100,14 +100,14 @@
 
 .quest_wrapper ul li a {
     text-decoration: none;
-    font-family: open sans;
+    font-family: inherit;
     font-weight: 400;
     font-size: 18px;
     color: #333333;
 }
 
 .quest_wrapper ul li .active {
-    font-family: open sans;
+    font-family: inherit;
     font-weight: 700;
     color: #007FA4;
     font-size: 18px;
@@ -132,7 +132,7 @@
 .kuestions h4 {
     margin: 0;
     font-size: 16px;
-    font-family: quicksand;
+    font-family: inherit;
     color: #007FA4;
     line-height: 17px;
 }

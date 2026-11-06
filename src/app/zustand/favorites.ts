@@ -270,3 +270,9 @@ export const useFavoriteStore = create<IFavoriteState>((set, _get) => ({
 }));
 
 
+
+// Shared heart-button behavior for every event list
+export const toggleFavorite = (item: any) => {
+    const { addFavorite, deleteFavorite } = useFavoriteStore.getState();
+    return item?.favorito || item?.esfavorito === 1 ? deleteFavorite(item) : addFavorite(item);
+};

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useAuthStore } from '@/app/zustand/auth';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function AdminLoginPage() {
     const router = useRouter();
@@ -29,10 +30,11 @@ export default function AdminLoginPage() {
                 return;
             }
 
-            // Check if user is admin (userType === 'COMPANY')
-            const auth = useAuthStore.getState().auth;
-            if (auth && (auth as any)?.userType === 'COMPANY') {
-                router.push('/');
+            // Same rule as the backend AdminGuard. auth/me always includes `role`
+            // (older backends omit it from the login response)
+            await useAuthStore.getState().me();
+            if (useAuthStore.getState().auth?.role === 'ADMIN') {
+                router.push('/admin');
             } else {
                 setError('Acceso denegado. No tienes permisos de administrador.');
                 setLoading(false);
@@ -143,13 +145,13 @@ export default function AdminLoginPage() {
 
                 {/* Subtle Home Link (for escape route if needed) */}
                 <div className="mt-4 text-center">
-                    <a
+                    <Link
                         href="/"
                         className="text-xs text-slate-400 hover:text-slate-300 transition-colors inline-flex items-center gap-1"
                     >
                         <Icon icon="solar:home-2-linear" width={14} />
                         Volver al inicio
-                    </a>
+                    </Link>
                 </div>
             </div>
         </div>

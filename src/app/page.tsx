@@ -1,121 +1,46 @@
 "use client";
 
-import Main from "./ui/Main";
-import { useEffect, useState, useRef } from "react";
-import { IEventsState, useEventStore } from "./zustand/events";
-import { ICategoriesState, useCategoriesState } from "./zustand/categories";
+import { useEffect, useState } from "react";
+import { useEventStore } from "./zustand/events";
+import { useCategoriesState } from "./zustand/categories";
 import { useFavoriteStore } from "./zustand/favorites";
 import { useAuthStore } from "./zustand/auth";
-import LoadingPage from "./ui/LandingPage";
-import Events from "./ui/Events";
+import Hero from "./ui/Home/Hero";
+import CategoryRail from "./ui/Home/CategoryRail";
 import EventsFeatured from "./ui/EventsFeatured";
-// import MailBox from "./ui/MainBox";
-// import Auth from "./ui/Auth";
-import Categories from "./ui/Categories";
-import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
-
-const Auth = dynamic(() => import("./ui/Auth"), { ssr: false });
-const MailBox = dynamic(() => import("./ui/MainBox"));
+import WeekendSection from "./ui/Home/WeekendSection";
+import NearYou from "./ui/Home/NearYou";
+import Events from "./ui/Events";
+import OrganizerBand from "./ui/Home/OrganizerBand";
 
 export default function Home() {
-  const [openAuth, setOpenAuth] = useState<boolean>(false);
-  const [openCategories, setOpenCategories] = useState<boolean>(false); // Inicializamos en falso
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [hasVisited, setHasVisited] = useState<boolean | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string | null>(null);
 
-  const { getEvents, getEventsDestacades }: IEventsState = useEventStore();
-  const { getCategoriesCount }: ICategoriesState = useCategoriesState();
+  const { getEvents, getEventsDestacades } = useEventStore();
+  const { getCategoriesCount } = useCategoriesState();
   const { getFavorites } = useFavoriteStore();
   const { auth } = useAuthStore();
-  const pathname = usePathname();
-  const hasMounted = useRef(false);
 
-  useEffect(() => {
-    window?.scrollTo(0, 0);
-  }, []);
-
-  // Fetch events when page changes
   useEffect(() => {
     getEvents(page);
   }, [page]);
 
-  // ALWAYS fetch featured events, categories, and sync favorites when Home mounts
-  // This ensures favorites are fresh on every visit
+  // Featured events + categories on mount; then sync favorites so cards show the right state
   useEffect(() => {
-    const fetchData = async () => {
-      // Fetch events (these will include favorite info from backend if user is logged in)
-      await Promise.all([
-        getEventsDestacades(),
-        getCategoriesCount()
-      ]);
-
-      // After events are loaded, sync favorites for logged-in users
-      // This updates the event arrays with correct favorite status
-      if (auth) {
-        await getFavorites();
-      }
-    };
-
-    fetchData();
-    hasMounted.current = true;
-  }, [pathname]); // Refetch when pathname changes (navigation)
-
-  useEffect(() => {
-    // Accede a localStorage solo en el cliente
-    const visited = localStorage.getItem("hasVisited");
-    const categories = localStorage.getItem("selectedCategories");
-
-    setHasVisited(visited ? true : false);
-    setSelectedCategories(categories);
-
-    // Modal de categorías deshabilitado
-    // if (!categories) {
-    //   setOpenCategories(true);
-    // }
+    Promise.all([getEventsDestacades(), getCategoriesCount()]).then(() => {
+      if (auth) getFavorites();
+    });
   }, []);
 
-  // useEffect(() => {
-  //   if (hasVisited === false) {
-  //     localStorage.setItem("hasVisited", "true");
-  //     localStorage.setItem("selectedCategories", "[]");
-  //     const timer = setTimeout(() => {
-  //       setLoading(false);
-  //     }, 2000); // Ajusta el tiempo según tus necesidades
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [hasVisited]);
-
-  useEffect(() => {
-    if (hasVisited) {
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-      }, 2500);
-    }
-  }, [hasVisited]); // Se ejecuta cada vez que `hasVisited` cambia
-
-  if (loading && selectedCategories?.length === 0) {
-    return <LoadingPage />;
-  }
-
   return (
-    <div>
-      <div>
-        {openCategories && (
-          <Categories
-            setOpenCategories={setOpenCategories}
-            openCategories={openCategories}
-          />
-        )}
-        <Main />
-        <EventsFeatured setOpenAuth={setOpenAuth} />
-        <Events setPage={setPage} setOpenAuth={setOpenAuth} />
-        <MailBox />
-      </div>
-      <Auth openAuth={openAuth} setOpenAuth={setOpenAuth} />
-    </div>
+    <>
+      <Hero />
+      <CategoryRail />
+      <EventsFeatured />
+      <WeekendSection />
+      <NearYou />
+      <Events setPage={setPage} />
+      <OrganizerBand />
+    </>
   );
 }

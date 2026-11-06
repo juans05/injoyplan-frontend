@@ -158,7 +158,7 @@ export default function AmigosPage() {
                     return (
                       <div key={u.id} className="flex items-center justify-between bg-[#FAFBFF] border border-[#EDEFF5] rounded-xl p-3">
                         <Link href={`/usuario/${u.id}`} className="flex items-center gap-3">
-                          <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
+                          <img loading="lazy" src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
                           <div>
                             <p className="font-bold text-[#212121]">{name}</p>
                             {u.username && <p className="text-[#666] text-sm">@{u.username}</p>}
@@ -272,7 +272,7 @@ export default function AmigosPage() {
                   return (
                     <div key={r.id} className="flex items-center justify-between bg-[#FAFBFF] border border-[#EDEFF5] rounded-xl p-3">
                       <Link href={`/usuario/${r.user.id}`} className="flex items-center gap-3">
-                        <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
+                        <img loading="lazy" src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
                         <p className="font-bold text-[#212121]">{name}</p>
                       </Link>
                       <div className="flex gap-2">
@@ -308,7 +308,7 @@ export default function AmigosPage() {
                   return (
                     <div key={f.id} className="flex items-center justify-between bg-[#FAFBFF] border border-[#EDEFF5] rounded-xl p-3">
                       <Link href={`/usuario/${other.id}`} className="flex items-center gap-3">
-                        <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
+                        <img loading="lazy" src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover" />
                         <p className="font-bold text-[#212121]">{name}</p>
                       </Link>
                       <button

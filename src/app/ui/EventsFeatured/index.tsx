@@ -1,83 +1,34 @@
-import styles from './card.module.css'
-import { Dispatch } from 'react'
-import { IEventsState, useEventStore } from '../../zustand/events'
-import { IAuthState, useAuthStore } from '../../zustand/auth'
-import { IFavoriteState, useFavoriteStore } from '../../zustand/favorites'
+"use client";
+import { useEventStore } from '../../zustand/events'
+import { toggleFavorite } from '../../zustand/favorites'
 import Card from '@/app/components/Card'
 import CardSkeleton from '@/app/components/CardSkeleton'
-import { Event } from '@/app/interfaces/event'
+import SectionHeader from '../Home/SectionHeader'
 
-
-interface IProps {
-    setOpenAuth: Dispatch<boolean>
-}
-
-const EventsFeatured = ({ setOpenAuth }: IProps) => {
-
-    // const { events }: IEventsState = useEventStore();
-    const { auth }: IAuthState = useAuthStore();
-    const { addFavorite, deleteFavorite }: IFavoriteState = useFavoriteStore();
+// Events the admin marks as featured. The first one gets a larger card.
+const EventsFeatured = () => {
     const { eventsDestacades, isLoading } = useEventStore();
 
-    const addFavoritesByUser = (item: any) => {
-        if (item.favorito || item.esfavorito === 1) {
-            deleteFavorite(item)
-        } else {
-            addFavorite(item)
-        }
-    }
-
-    console.log(eventsDestacades)
-
-    // Show skeleton while loading OR if no events yet (initial state)
-    const showContent = !isLoading && eventsDestacades?.length > 0;
-    const showSkeleton = isLoading;
-
-    // If not loading and no events, don't show the section at all
-    if (!isLoading && eventsDestacades?.length === 0) return null;
+    if (!isLoading && !eventsDestacades?.length) return null;
+    const loading = isLoading && !eventsDestacades?.length;
 
     return (
-        <>
-            {showSkeleton && (
-                <div className='bg-[#FAFBFF] pb-[80px]'>
-                    <div className="2xl:max-w-screen-2xl xl:max-w-screen-xl max-w-[980px] mx-auto md:mt-16 mt-8 xl:px-10 px-5">
-                        <div className="md:px-0">
-                            <div className='md:pt-12 pt-10'>
-                                <div className="h-8 bg-gray-300 rounded w-64 mb-8 animate-pulse"></div>
-                            </div>
-                            <div className="grid auto-cols-min grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-                                {Array.from({ length: 6 }).map((_, i) => (
-                                    <CardSkeleton key={i} />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {showContent && (
-                <div className='bg-[#FAFBFF] pb-[80px]'>
-                    <div className="2xl:max-w-screen-2xl xl:max-w-screen-xl max-w-[980px] mx-auto md:mt-16 mt-8 xl:px-10 px-5">
-                        <div className="md:px-0">
-                            <div className='md:pt-12 pt-10'>
-                                <h2 className='text-3xl mb-8 font-bold text-[#444444] md:text-[#212121]'>Eventos destacados</h2>
-                            </div>
-                            <div className="grid auto-cols-min grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-                                {
-                                    eventsDestacades.map((item: any, index: number) => {
-                                        return (
-                                            <Card item={item} key={index} addFavoritesByUser={addFavoritesByUser} />
-                                        )
-                                    })
-                                }
-                            </div>
-                            <div className={styles.button__moreEvents}>
-                                {/* <button onClick={() => setPage((page: any) => page + 12)} type="submit">VER MÁS EVENTOS</button> */}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
+        <section className="section" aria-labelledby="featured-title">
+            <div className="container-page">
+                <SectionHeader id="featured-title" title="Eventos destacados" description="Una selección de lo que no te puedes perder." />
+                <ul className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+                    {loading
+                        ? Array.from({ length: 5 }).map((_, i) => (
+                            <li key={i} className={i === 0 ? 'sm:col-span-2 lg:row-span-2' : ''}><CardSkeleton /></li>
+                        ))
+                        : eventsDestacades.map((item, i) => (
+                            <li key={`${item.idEventos}-${item.idfecha}`} className={i === 0 ? 'sm:col-span-2 lg:row-span-2' : ''}>
+                                <Card item={item} addFavoritesByUser={toggleFavorite} featured={i === 0} />
+                            </li>
+                        ))}
+                </ul>
+            </div>
+        </section>
     )
 }
 

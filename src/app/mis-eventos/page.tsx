@@ -12,6 +12,7 @@ import Auth from '@/app/ui/Auth';
 import { useAuthStore } from '@/app/zustand/auth';
 import { useProfileStore } from '@/app/zustand/profile';
 import { useEventCreateStore } from '@/app/zustand/eventCreate';
+import { eventPath } from '@/app/utils/urls';
 
 export default function MisEventosPage() {
     const { auth, me } = useAuthStore();
@@ -23,7 +24,7 @@ export default function MisEventosPage() {
     const [showCompanyOnlyModal, setShowCompanyOnlyModal] = useState(false);
 
     const handleCreateEventClick = () => {
-        if ((auth as any)?.userType === 'COMPANY') {
+        if (auth?.userType === 'COMPANY') {
             router.push('/perfil/crear-evento');
         } else {
             setShowCompanyOnlyModal(true);
@@ -157,7 +158,7 @@ export default function MisEventosPage() {
                                                     <Icon icon="solar:trash-bin-trash-bold" width={20} />
                                                 </button>
                                                 <Link
-                                                    href={event.dates?.[0]?.id ? `/evento/${event.id}/${event.dates[0].id}` : `/evento/${event.id}`}
+                                                    href={eventPath(event.id, event.title, event.dates?.[0]?.id)}
                                                     className="w-12 h-12 rounded-full bg-white text-[#212121] flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors"
                                                     title="Ver"
                                                 >

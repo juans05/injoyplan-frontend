@@ -4,562 +4,17 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAuthStore } from '../zustand/auth';
+import useAlertStore from '../zustand/alert';
 import useDebounce from '../hooks/useDebounce';
-import ubigeoData from '@/data/ubigeo.json';
-
-// --- Components ---
-
-const SidebarItem = ({ icon, label, active, onClick }: { icon: string, label: string, active?: boolean, onClick: () => void }) => (
-    <button
-        onClick={onClick}
-        className={`w-full flex items-center gap-4 px-4 py-3 border-r-[4px] transition-all duration-200 group ${active
-            ? 'border-[#277FA4] text-[#277FA4] font-bold bg-[#E0F2F7]/50'
-            : 'border-transparent text-slate-400 hover:text-[#277FA4] font-medium'
-            }`}
-    >
-        <Icon icon={icon} width={24} className={`${active ? 'text-[#277FA4]' : 'text-slate-400 group-hover:text-[#277FA4]'}`} />
-        <span>{label}</span>
-    </button>
-);
-
-const StatCard = ({ icon, title, value, subtitle, trend }: { icon: string, title: string, value: string | number, subtitle: string, trend?: 'up' | 'down' }) => (
-    <div className="bg-white rounded-[20px] p-4 flex items-center gap-4 shadow-sm border border-slate-100">
-        <div className="w-14 h-14 rounded-full bg-[#E0F2F7] flex items-center justify-center text-[#277FA4]">
-            <Icon icon={icon} width={32} />
-        </div>
-        <div>
-            <p className="text-slate-400 text-sm font-medium">{title}</p>
-            <h3 className="text-slate-800 text-2xl font-bold">{value}</h3>
-            <p className="text-xs text-slate-400 flex items-center gap-1">
-                {trend === 'up' && <span className="text-[#05CD99] font-bold flex items-center"><Icon icon="solar:arrow-up-linear" /> +2.4%</span>}
-                <span className="font-medium">{subtitle}</span>
-            </p>
-        </div>
-    </div>
-);
-
-const BarChartMock = () => (
-    <div className="flex items-end justify-between h-[200px] w-full gap-2 mt-4 px-2">
-        {[40, 70, 30, 85, 50, 90, 60].map((h, i) => (
-            <div key={i} className="w-full bg-[#E0F2F7] rounded-t-lg relative group h-full flex items-end">
-                <div
-                    className="w-full bg-[#277FA4] rounded-t-lg transition-all duration-500 hover:bg-[#1a5c7a]"
-                    style={{ height: `${h}%` }}
-                ></div>
-            </div>
-        ))}
-    </div>
-);
-
-// --- Modal Component ---
-
-const BannerModal = ({ isOpen, onClose, onSave, initialData }: any) => {
-    const [formData, setFormData] = useState({
-        title: '', imageUrl: '', link: '', categoria: '', direccion: '', urlFuente: '', idRow: '', fecha: '', horaInicio: '', horaFin: '', isActive: true
-    });
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (initialData) {
-            setFormData({
-                title: initialData.title || '',
-                imageUrl: initialData.imageUrl || '',
-                link: initialData.link || '',
-                categoria: initialData.categoria || '',
-                direccion: initialData.direccion || '',
-                urlFuente: initialData.urlFuente || '',
-                idRow: initialData.idRow || '',
-                fecha: initialData.fecha ? initialData.fecha.split('T')[0] : '',
-                horaInicio: initialData.horaInicio || '',
-                horaFin: initialData.horaFin || '',
-                isActive: initialData.isActive ?? true
-            });
-            setPreviewUrl(initialData.imageUrl || null);
-        } else {
-            setFormData({ title: '', imageUrl: '', link: '', categoria: '', direccion: '', urlFuente: '', idRow: '', fecha: '', horaInicio: '', horaFin: '', isActive: true });
-            setPreviewUrl(null);
-        }
-        setSelectedFile(null);
-    }, [initialData, isOpen]);
-
-    if (!isOpen) return null;
-
-    const handleChange = (e: any) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-    };
-
-    const handleFileChange = (e: any) => {
-        const file = e.target.files[0];
-        if (file) {
-            setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-        }
-    };
-
-    const handleSubmit = (e: any) => {
-        e.preventDefault();
-        onSave(formData, selectedFile);
-    };
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-[20px] w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h2 className="text-slate-800 text-xl font-bold">{initialData ? 'Editar Banner' : 'Nuevo Banner'}</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-800">
-                        <Icon icon="solar:close-circle-bold" width={24} />
-                    </button>
-                </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="flex justify-center mb-4">
-                        <div className="relative w-full h-48 bg-gray-100 rounded-xl overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center group hover:border-[#4318FF] transition-colors">
-                            {previewUrl ? (
-                                <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
-                            ) : (
-                                <div className="text-center text-gray-400">
-                                    <Icon icon="solar:camera-add-bold" width={40} className="mx-auto mb-2" />
-                                    <p>Subir Imagen</p>
-                                </div>
-                            )}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className="absolute inset-0 opacity-0 cursor-pointer"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">Título</label>
-                            <input required name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="Título del banner" />
-                        </div>
-                        {/* Image URL legacy input hidden or removed, using file upload now */}
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">Enlace (Opcional)</label>
-                            <input name="link" value={formData.link} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="/evento/..." />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">Categoría</label>
-                            <input name="categoria" value={formData.categoria} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="Ej: Concierto" />
-                        </div>
-
-                        {/* New Fields */}
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">Fecha</label>
-                            <input type="date" name="fecha" value={formData.fecha} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">Dirección</label>
-                            <input name="direccion" value={formData.direccion} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="Lugar del evento" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">Hora Inicio</label>
-                            <input type="time" name="horaInicio" value={formData.horaInicio} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">Hora Fin</label>
-                            <input type="time" name="horaFin" value={formData.horaFin} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">URL Fuente (Origen)</label>
-                            <input name="urlFuente" value={formData.urlFuente} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="https://ticketera.com..." />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-800 mb-1">ID Row (Ref Ext)</label>
-                            <input name="idRow" value={formData.idRow} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="ID Externo" />
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-4">
-                        <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} id="activeCheck" className="w-5 h-5 text-[#277FA4] rounded focus:ring-0" />
-                        <label htmlFor="activeCheck" className="text-slate-800 font-bold">Banner Activo</label>
-                    </div>
-
-                    <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
-                        <button type="button" onClick={onClose} className="px-6 py-3 rounded-xl text-slate-500 font-bold hover:bg-slate-50 transition-colors">Cancelar</button>
-                        <button type="submit" className="px-8 py-3 rounded-xl bg-[#277FA4] text-white font-bold hover:bg-[#206a8a] transition-colors shadow-lg">Guardar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
-// --- Event Modal Component ---
-
-type DateEntry = { date: string; startTime: string; endTime: string; price: string; id?: string };
-
-const EventModal = ({ isOpen, onClose, onSave, categories, initialData }: any) => {
-    const [formData, setFormData] = useState<{
-        title: string; description: string; category: string; imageUrl: string; websiteUrl: string; isFeatured: boolean; isBanner: boolean;
-        locationName: string; department: string; province: string; district: string; address: string; latitude: string; longitude: string;
-    }>({
-        title: '', description: '', category: '', imageUrl: '', websiteUrl: '', isFeatured: false, isBanner: false,
-        locationName: '', department: 'Lima', province: 'Lima', district: '', address: '', latitude: '', longitude: ''
-    });
-    const [ticketUrls, setTicketUrls] = useState<{ name: string; url: string }[]>([{ name: '', url: '' }]);
-    const [dates, setDates] = useState<DateEntry[]>([{ date: '', startTime: '', endTime: '', price: '' }]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            if (initialData) {
-                // Editing mode - populate with existing data
-                setFormData({
-                    title: initialData.title || '',
-                    description: initialData.description || '',
-                    category: initialData.category || categories?.[0] || '',
-                    imageUrl: initialData.imageUrl || '',
-                    websiteUrl: initialData.websiteUrl || initialData.bannerUrl || '',
-                    isFeatured: initialData.isFeatured || false,
-                    isBanner: initialData.isBanner || false,
-                    locationName: initialData.location?.name || '',
-                    department: initialData.location?.department || 'Lima',
-                    province: initialData.location?.province || 'Lima',
-                    district: initialData.location?.district || '',
-                    address: initialData.location?.address || '',
-                    latitude: initialData.location?.latitude || '',
-                    longitude: initialData.location?.longitude || ''
-                });
-                // Ticket URLs
-                if (initialData.ticketUrls && Array.isArray(initialData.ticketUrls) && initialData.ticketUrls.length > 0) {
-                    setTicketUrls(initialData.ticketUrls);
-                } else {
-                    setTicketUrls([{ name: '', url: '' }]);
-                }
-
-                // Populate dates
-                if (initialData.dates && initialData.dates.length > 0) {
-                    setDates(initialData.dates.map((d: any) => ({
-                        id: d.id,
-                        date: d.date ? d.date.split('T')[0] : '',
-                        startTime: d.startTime || '',
-                        endTime: d.endTime || '',
-                        price: d.price?.toString() || ''
-                    })));
-                } else {
-                    setDates([{ date: '', startTime: '', endTime: '', price: '' }]);
-                }
-            } else {
-                // Creating mode - reset
-                setFormData({
-                    title: '', description: '', category: categories?.[0] || '', imageUrl: '', websiteUrl: '', isFeatured: false, isBanner: false,
-                    locationName: '', department: 'Lima', province: 'Lima', district: '', address: '', latitude: '', longitude: ''
-                });
-                setTicketUrls([{ name: '', url: '' }]);
-                setDates([{ date: '', startTime: '', endTime: '', price: '' }]);
-            }
-        }
-    }, [isOpen, initialData, categories]);
-
-    if (!isOpen) return null;
-
-    const handleChange = (e: any) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-    };
-
-    const handleDateChange = (index: number, field: string, value: string) => {
-        setDates(prev => prev.map((d, i) => i === index ? { ...d, [field]: value } : d));
-    };
-
-    const addDate = () => {
-        setDates(prev => [...prev, { date: '', startTime: '', endTime: '', price: '' }]);
-    };
-
-    const removeDate = (index: number) => {
-        if (dates.length > 1) {
-            setDates(prev => prev.filter((_, i) => i !== index));
-        }
-    };
-
-    const handleSubmit = async (e: any) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        const payload = {
-            ...formData,
-            ticketUrls: ticketUrls.filter(t => t.url.trim()).map(t => ({ name: t.name.trim() || 'Entradas', url: t.url.trim() })),
-            dates: dates.filter(d => d.date),
-            isEdit: !!initialData,
-            eventId: initialData?.id,
-            // Ensure lat/lng are numbers or undefined
-            latitude: formData.latitude ? Number(formData.latitude) : undefined,
-            longitude: formData.longitude ? Number(formData.longitude) : undefined
-        };
-        await onSave(payload);
-        setIsSubmitting(false);
-    };
-
-    const isEditing = !!initialData;
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-[20px] w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h2 className="text-slate-800 text-xl font-bold">{isEditing ? 'Editar Evento' : 'Nuevo Evento'}</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-800">
-                        <Icon icon="solar:close-circle-bold" width={24} />
-                    </button>
-                </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Basic Info */}
-                    <div>
-                        <h3 className="text-slate-800 font-bold mb-3">Información Básica</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Título *</label>
-                                <input required name="title" value={formData.title} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="Título del evento" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Categoría *</label>
-                                <select name="category" value={formData.category} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800">
-                                    {(categories || []).map((c: string) => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <input type="checkbox" name="isFeatured" checked={formData.isFeatured} onChange={handleChange} id="featuredCheck" className="w-5 h-5 text-[#277FA4] rounded" />
-                                <label htmlFor="featuredCheck" className="text-slate-800 font-bold">Destacado</label>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <input type="checkbox" name="isBanner" checked={formData.isBanner} onChange={handleChange} id="bannerCheck" className="w-5 h-5 text-[#277FA4] rounded" />
-                                <label htmlFor="bannerCheck" className="text-slate-800 font-bold">Banner Principal</label>
-                            </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Descripción *</label>
-                                <textarea required name="description" value={formData.description} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800 min-h-[80px]" placeholder="Descripción del evento" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Media */}
-                    <div className="border-t border-gray-100 pt-6">
-                        <h3 className="text-slate-800 font-bold mb-3">Imágenes y Enlaces</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Imagen principal (URL)</label>
-                                <input name="imageUrl" value={formData.imageUrl} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="https://..." />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">URL Fuente Principal</label>
-                                <input name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="https://..." />
-                            </div>
-                            {/* Multiple Ticket URLs */}
-                            <div className="md:col-span-2">
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="block text-sm font-bold text-slate-800 mb-1">Links de entradas / fuentes</label>
-                                    <button
-                                        type="button"
-                                        onClick={() => setTicketUrls(prev => [...prev, { name: '', url: '' }])}
-                                        className="text-[#277FA4] font-bold text-sm hover:underline"
-                                    >
-                                        + Agregar link
-                                    </button>
-                                </div>
-                                <div className="space-y-3">
-                                    {ticketUrls.map((link, idx) => (
-                                        <div key={idx} className="flex gap-2 items-center">
-                                            {(() => {
-                                                const knownPlatforms = ['Joinnus', 'Teleticket', 'Ticketmaster', 'Instagram', 'TikTok', 'Facebook', 'WhatsApp', 'Web'];
-                                                const isCustom = link.name && !knownPlatforms.includes(link.name);
-
-                                                if (isCustom) {
-                                                    return (
-                                                        <div className="w-1/3 flex gap-1">
-                                                            <input
-                                                                value={link.name === 'Otro' ? '' : link.name}
-                                                                onChange={(e) => setTicketUrls(prev => prev.map((l, i) => i === idx ? { ...l, name: e.target.value } : l))}
-                                                                className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800"
-                                                                placeholder="Plataforma..."
-                                                                autoFocus
-                                                            />
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setTicketUrls(prev => prev.map((l, i) => i === idx ? { ...l, name: 'Web' } : l))}
-                                                                className="text-slate-400 hover:text-slate-600 px-1"
-                                                            >
-                                                                <Icon icon="solar:list-bold" width={20} />
-                                                            </button>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                return (
-                                                    <select
-                                                        value={link.name}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            // If 'Otro' selected, we want to clear name to allow typing, but keep placeholder
-                                                            // We set it to 'Otro' initially to trigger isCustom logic?
-                                                            // Actually, 'Otro' is not in knownPlatforms, so it becomes custom.
-                                                            setTicketUrls(prev => prev.map((l, i) => i === idx ? { ...l, name: val } : l));
-                                                        }}
-                                                        className="w-1/3 px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800"
-                                                    >
-                                                        <option value="" disabled>Plataforma</option>
-                                                        {knownPlatforms.map(p => <option key={p} value={p}>{p}</option>)}
-                                                        <option value="Otro">Otro / Escribir...</option>
-                                                    </select>
-                                                );
-                                            })()}
-                                            <input
-                                                value={link.url}
-                                                onChange={(e) => setTicketUrls(prev => prev.map((l, i) => i === idx ? { ...l, url: e.target.value } : l))}
-                                                className="flex-1 px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800"
-                                                placeholder="https://..."
-                                            />
-                                            {ticketUrls.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setTicketUrls(prev => prev.filter((_, i) => i !== idx))}
-                                                    className="text-[#E31A1A] font-bold text-sm"
-                                                >
-                                                    <Icon icon="solar:trash-bin-trash-bold" width={20} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Dates - Multiple */}
-                    <div className="border-t border-gray-100 pt-6">
-                        <div className="flex justify-between items-center mb-3">
-                            <h3 className="text-slate-800 font-bold">Fechas ({dates.length})</h3>
-                            <button type="button" onClick={addDate} className="text-[#277FA4] font-bold text-sm hover:underline">+ Agregar fecha</button>
-                        </div>
-                        <div className="space-y-3 max-h-[200px] overflow-y-auto">
-                            {dates.map((d, idx) => (
-                                <div key={idx} className="bg-slate-50 p-3 rounded-xl">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-slate-800 text-xs font-bold">Fecha #{idx + 1}</span>
-                                        {dates.length > 1 && <button type="button" onClick={() => removeDate(idx)} className="text-[#E31A1A] text-xs font-bold">Quitar</button>}
-                                    </div>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        <input type="date" value={d.date} onChange={(e) => handleDateChange(idx, 'date', e.target.value)} className="px-3 py-2 rounded-lg bg-white border-none outline-none text-slate-800 text-sm" />
-                                        <input type="time" value={d.startTime} onChange={(e) => handleDateChange(idx, 'startTime', e.target.value)} className="px-3 py-2 rounded-lg bg-white border-none outline-none text-slate-800 text-sm" placeholder="Inicio" />
-                                        <input type="time" value={d.endTime} onChange={(e) => handleDateChange(idx, 'endTime', e.target.value)} className="px-3 py-2 rounded-lg bg-white border-none outline-none text-slate-800 text-sm" placeholder="Fin" />
-                                        <input type="number" value={d.price} onChange={(e) => handleDateChange(idx, 'price', e.target.value)} className="px-3 py-2 rounded-lg bg-white border-none outline-none text-slate-800 text-sm" placeholder="S/" />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Location */}
-                    <div className="border-t border-gray-100 pt-6">
-                        <h3 className="text-slate-800 font-bold mb-3">Ubicación</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Nombre del lugar</label>
-                                <input name="locationName" value={formData.locationName} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="Ej: Teatro Municipal" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Departamento</label>
-                                <select
-                                    name="department"
-                                    value={formData.department}
-                                    onChange={(e) => {
-                                        setFormData(prev => ({ ...prev, department: e.target.value, province: '', district: '' }));
-                                    }}
-                                    className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800"
-                                >
-                                    <option value="">Selecciona</option>
-                                    {Object.keys(ubigeoData).map((d) => (
-                                        <option key={d} value={d}>{d}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Provincia</label>
-                                <select
-                                    name="province"
-                                    value={formData.province}
-                                    onChange={(e) => {
-                                        setFormData(prev => ({ ...prev, province: e.target.value, district: '' }));
-                                    }}
-                                    disabled={!formData.department}
-                                    className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800 disabled:opacity-50"
-                                >
-                                    <option value="">Selecciona</option>
-                                    {formData.department && (ubigeoData as any)[formData.department] && Object.keys((ubigeoData as any)[formData.department]).map((p) => (
-                                        <option key={p} value={p}>{p}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Distrito</label>
-                                <select
-                                    name="district"
-                                    value={formData.district}
-                                    onChange={handleChange}
-                                    disabled={!formData.province}
-                                    className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800 disabled:opacity-50"
-                                >
-                                    <option value="">Selecciona</option>
-                                    {formData.department && formData.province && (ubigeoData as any)[formData.department]?.[formData.province] && (ubigeoData as any)[formData.department][formData.province].map((d: string) => (
-                                        <option key={d} value={d}>{d}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Dirección</label>
-                                <input name="address" value={formData.address} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="Av. ..." />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Latitud</label>
-                                <input name="latitude" value={formData.latitude} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="-12.1234" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-800 mb-1">Longitud</label>
-                                <input name="longitude" value={formData.longitude} onChange={handleChange} className="w-full px-4 py-2 rounded-xl bg-slate-50 border-none outline-none text-slate-800" placeholder="-77.1234" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                        <button type="button" onClick={onClose} className="px-6 py-3 rounded-xl text-slate-500 font-bold hover:bg-slate-50 transition-colors">Cancelar</button>
-                        <button type="submit" disabled={isSubmitting} className={`px-8 py-3 rounded-xl text-white font-bold shadow-lg transition-colors ${isSubmitting ? 'bg-slate-300 cursor-not-allowed' : 'bg-[#277FA4] hover:bg-[#206a8a]'}`}>
-                            {isSubmitting ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Crear Evento'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message }: any) => {
-    if (!isOpen) return null;
-    return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl p-6 text-center">
-                <div className="w-16 h-16 bg-[#FFEAEA] text-[#E31A1A] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon icon="solar:trash-bin-trash-bold" width={32} />
-                </div>
-                <h3 className="text-slate-800 text-xl font-bold mb-2">{title}</h3>
-                <p className="text-slate-400 mb-6">{message}</p>
-                <div className="flex justify-center gap-3">
-                    <button onClick={onClose} className="px-6 py-3 rounded-xl text-slate-400 font-bold hover:bg-gray-100 transition-colors">Cancelar</button>
-                    <button onClick={onConfirm} className="px-8 py-3 rounded-xl bg-[#E31A1A] text-white font-bold hover:bg-[#CC1010] shadow-lg transition-colors">Sí, Eliminar</button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
+import { get, post, patch, del, postFormData, isApiError } from '../utils/fetch';
+import { SidebarItem, StatCard, BarChartMock, ConfirmModal } from './components';
+import { BannerModal } from './BannerModal';
+import { EventModal } from './EventModal';
 
 export default function AdminPage() {
     const router = useRouter();
-    const { auth, me } = useAuthStore();
+    const { auth, me, logout } = useAuthStore();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<any>(null);
     const [users, setUsers] = useState<any[]>([]);
@@ -586,82 +41,58 @@ export default function AdminPage() {
     // Confirm Modal State
     const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
-    // Auth check
+    // Auth check: the backend AdminGuard is the real protection, this only avoids showing the panel
     useEffect(() => {
-        me();
+        me().then(() => {
+            if (useAuthStore.getState().auth?.role !== 'ADMIN') router.replace('/iniciar-sesion-admin');
+        });
     }, []);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            // Basic role check
-            if (auth && (auth as any).role !== 'ADMIN') {
-                router.push('/');
-            }
-            if (auth && (auth as any).role === 'ADMIN') {
-                setLoading(false);
-                fetchData();
-            }
-        };
-        checkAuth();
+        if (auth?.role === 'ADMIN') {
+            setLoading(false);
+            fetchData();
+        }
     }, [auth]);
 
     // Refetch when filters change
     useEffect(() => {
-        if (!loading && auth && (auth as any).role === 'ADMIN') {
+        if (!loading && auth && auth.role === 'ADMIN') {
             fetchEvents(1);
         }
     }, [filterStatus, filterFeatured, debouncedSearch]);
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4201';
+    const notify = useAlertStore((st) => st.alert);
+    const askConfirm = (title: string, message: string, onConfirm: () => Promise<void> | void) =>
+        setConfirmModal({ isOpen: true, title, message, onConfirm: async () => { await onConfirm(); closeConfirm(); } });
+    const closeConfirm = () => setConfirmModal(prev => ({ ...prev, isOpen: false }));
 
     const handleDeleteAllEvents = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const res = await fetch(`${API_URL}/events/all`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (res.ok) {
-                // const data = await res.json();
-                fetchEvents(1);
-                fetchData(); // Reload stats
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
-            } else {
-                console.error('Error deleting events');
-            }
-        } catch (error) {
-            console.error(error);
-        }
+        const resp = await del('events/all');
+        if (isApiError(resp)) return notify('No se pudieron eliminar los eventos', 'error');
+        fetchData(); // Reloads stats and events
     };
 
-    const openConfirmDeleteAll = () => {
-        setConfirmModal({
-            isOpen: true,
-            title: '¿Estás seguro?',
-            message: 'Esta acción ELIMINARÁ TODOS los eventos de la base de datos permanentemente. Se recomienda tener un respaldo.',
-            onConfirm: handleDeleteAllEvents
-        });
-    }
+    const openConfirmDeleteAll = () => askConfirm(
+        '¿Estás seguro?',
+        'Esta acción ELIMINARÁ TODOS los eventos de la base de datos permanentemente. Se recomienda tener un respaldo.',
+        handleDeleteAllEvents
+    );
 
     const fetchData = async () => {
-        const token = localStorage.getItem('token');
-        const headers = { Authorization: `Bearer ${token}` };
-
         try {
             const [statsRes, usersRes, bannersRes, categoriesRes] = await Promise.all([
-                fetch(`${API_URL}/admin/stats`, { headers }).then(r => r.json()),
-                fetch(`${API_URL}/admin/users?limit=10`, { headers }).then(r => r.json()),
-                fetch(`${API_URL}/admin/banners`, { headers }).then(r => r.json()),
-                fetch(`${API_URL}/events/stats/by-category`, { headers }).then(r => r.json()).catch(() => [])
+                get<any>('admin/stats'),
+                get<any>('admin/users?limit=10'),
+                get<any>('admin/banners'),
+                get<any>('events/stats/by-category').catch(() => []),
             ]);
             setStats(statsRes);
             setUsers(usersRes.users || []);
-            setBanners(bannersRes || []);
+            setBanners(Array.isArray(bannersRes) ? bannersRes : []);
             const catsArray = Array.isArray(categoriesRes) ? categoriesRes : (categoriesRes?.data || categoriesRes?.categories || []);
             const cats = catsArray.map((c: any) => c?.nombreCategoria || c?.name || c?.category || '').filter(Boolean);
             setCategories(cats.length > 0 ? cats : ['Conciertos', 'Teatro', 'Ferias', 'Deportes', 'Gastronomía']);
-            // Fetch events separately with pagination
             await fetchEvents(1);
         } catch (e) {
             console.error(e);
@@ -669,98 +100,81 @@ export default function AdminPage() {
     };
 
     const fetchEvents = async (page: number) => {
-        const token = localStorage.getItem('token');
-        const headers = { Authorization: `Bearer ${token}` };
         try {
-            // Build URL with filters
-            let url = `${API_URL}/events?limit=24&page=${page}&status=${filterStatus}`;
+            let url = `events?limit=24&page=${page}&status=${filterStatus}`;
             if (filterFeatured === 'featured') url += `&isFeatured=true`;
             if (filterFeatured === 'standard') url += `&isFeatured=false`;
             if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
 
-            const eventsRes = await fetch(url, { headers }).then(r => r.json());
+            const eventsRes = await get<any>(url);
             const list = Array.isArray(eventsRes?.data) ? eventsRes.data : Array.isArray(eventsRes?.events) ? eventsRes.events : Array.isArray(eventsRes) ? eventsRes : [];
             setEvents(list);
             setEventsTotal(eventsRes?.total || list.length || 0);
             setEventsPage(page);
-            if (mainRef.current) mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (e) {
             console.error(e);
         }
     };
 
-    const getToken = () => localStorage.getItem('token');
-
     const toggleUserRole = async (userId: string, currentRole: string) => {
-        const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
-        await fetch(`${API_URL}/admin/users/${userId}/role`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-            body: JSON.stringify({ role: newRole }),
-        });
+        await patch(`admin/users/${userId}/role`, { role: currentRole === 'ADMIN' ? 'USER' : 'ADMIN' });
         fetchData();
     };
 
     const toggleBannerActive = async (bannerId: string, isActive: boolean) => {
-        await fetch(`${API_URL}/admin/banners/${bannerId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-            body: JSON.stringify({ isActive: !isActive }),
-        });
+        await patch(`admin/banners/${bannerId}`, { isActive: !isActive });
         fetchData();
     };
 
-    const deleteBanner = (bannerId: string) => {
-        setConfirmModal({
-            isOpen: true,
-            title: '¿Eliminar Banner?',
-            message: 'Esta acción no se puede deshacer. El banner dejará de ser visible para los usuarios.',
-            onConfirm: async () => {
-                await fetch(`${API_URL}/admin/banners/${bannerId}`, {
-                    method: 'DELETE',
-                    headers: { Authorization: `Bearer ${getToken()}` },
-                });
-                setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                fetchData();
-            }
-        });
+    const deleteBanner = (bannerId: string) => askConfirm(
+        '¿Eliminar Banner?',
+        'Esta acción no se puede deshacer. El banner dejará de ser visible para los usuarios.',
+        async () => { await del(`admin/banners/${bannerId}`); fetchData(); }
+    );
+
+    const toggleEventStatus = async (eventId: string) => {
+        await patch(`events/${eventId}/toggle-status`, {});
+        fetchEvents(eventsPage);
     };
 
+    const deleteEvent = (eventId: string) => askConfirm(
+        '¿Eliminar evento?',
+        'Esta acción no se puede deshacer.',
+        async () => { await del(`events/${eventId}`); fetchEvents(eventsPage); }
+    );
+
     const handleSaveBanner = async (data: any, file: File | null) => {
-        const url = editingBanner
-            ? `${API_URL}/admin/banners/${editingBanner.id}`
-            : `${API_URL}/admin/banners`;
-
-        const method = editingBanner ? 'PATCH' : 'POST';
-
         const formData = new FormData();
         Object.keys(data).forEach(key => {
-            if (data[key] !== null && data[key] !== undefined) {
-                formData.append(key, data[key]);
-            }
+            if (data[key] !== null && data[key] !== undefined) formData.append(key, data[key]);
         });
-        if (file) {
-            formData.append('file', file);
-        }
+        if (file) formData.append('file', file);
 
         try {
-            const res = await fetch(url, {
-                method,
-                headers: { Authorization: `Bearer ${getToken()}` }, // No Content-Type, browsers sets it
-                body: formData,
-            });
-
-            if (res.ok) {
-                setIsModalOpen(false);
-                setEditingBanner(null);
-                fetchData();
-            } else {
-                const error = await res.json();
-                alert(`Error al guardar banner: ${error.message || 'Desconocido'}`);
-            }
+            const resp: any = editingBanner
+                ? await postFormData(`admin/banners/${editingBanner.id}`, formData, 'PATCH')
+                : await postFormData('admin/banners', formData);
+            if (isApiError(resp)) return notify(`Error al guardar banner: ${resp.message || 'Desconocido'}`, 'error');
+            setIsModalOpen(false);
+            setEditingBanner(null);
+            fetchData();
         } catch (e) {
             console.error(e);
-            alert('Error al guardar banner');
+            notify('Error al guardar banner', 'error');
+        }
+    };
+
+    const handleImportEvents = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const resp: any = await postFormData('admin/events/import', formData);
+            if (isApiError(resp)) return notify(`Error: ${resp.message || 'No se pudo importar'}`, 'error');
+            notify(`Importados ${resp.count || 0} eventos`, 'success');
+            fetchEvents(1);
+        } catch {
+            notify('Error al subir archivo', 'error');
         }
     };
 
@@ -776,7 +190,7 @@ export default function AdminPage() {
 
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 text-[#277FA4]">Cargando panel...</div>;
-    const user = auth as any;
+    const user = auth;
 
     return (
         <div className="flex h-screen bg-[#F0F4F8] font-sans">
@@ -818,7 +232,7 @@ export default function AdminPage() {
                     <div className="p-4 border-t border-gray-100">
                         <button
                             onClick={() => {
-                                localStorage.removeItem('token');
+                                logout();
                                 router.push('/');
                             }}
                             className="w-full flex items-center gap-4 px-4 py-3 text-[#E31A1A] hover:bg-red-50 rounded-xl transition-colors font-medium"
@@ -858,7 +272,7 @@ export default function AdminPage() {
                             />
                         </div>
                         <div className="w-10 h-10 rounded-full bg-[#277FA4] text-white flex items-center justify-center font-bold overflow-hidden">
-                            {user?.profile?.avatar ? <img src={user.profile.avatar} className="w-full h-full object-cover" /> : (user?.profile?.firstName?.[0] || 'A')}
+                            {user?.profile?.avatar ? <img loading="lazy" src={user.profile.avatar} className="w-full h-full object-cover" /> : (user?.profile?.firstName?.[0] || 'A')}
                         </div>
                         <button className="lg:hidden text-slate-800 ml-2" onClick={() => setIsSidebarOpen(true)}>
                             <Icon icon="solar:hamburger-menu-linear" width={24} />
@@ -967,7 +381,7 @@ export default function AdminPage() {
                             {banners.map(banner => (
                                 <div key={banner.id} className="bg-white rounded-[20px] p-4 shadow-[0px_18px_40px_rgba(112,144,176,0.12)] group">
                                     <div className="relative h-40 w-full rounded-[16px] overflow-hidden mb-4 bg-gray-100">
-                                        {banner.imageUrl && <img src={banner.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />}
+                                        {banner.imageUrl && <img loading="lazy" src={banner.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />}
                                         <div className="absolute top-2 right-2">
                                             <span className={`px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm ${banner.isActive ? 'bg-[#05CD99]' : 'bg-gray-400'}`}>
                                                 {banner.isActive ? 'Activo' : 'Inactivo'}
@@ -1055,26 +469,7 @@ export default function AdminPage() {
                                         className="hidden"
                                         onChange={async (e) => {
                                             const file = e.target.files?.[0];
-                                            if (!file) return;
-                                            const formData = new FormData();
-                                            formData.append('file', file);
-                                            try {
-                                                const res = await fetch(`${API_URL}/admin/events/import`, {
-                                                    method: 'POST',
-                                                    headers: { Authorization: `Bearer ${getToken()}` },
-                                                    body: formData,
-                                                });
-                                                if (res.ok) {
-                                                    const result = await res.json();
-                                                    alert(`Importados ${result.count || 0} eventos`);
-                                                    fetchEvents(1);
-                                                } else {
-                                                    const err = await res.json();
-                                                    alert(`Error: ${err.message || 'No se pudo importar'}`);
-                                                }
-                                            } catch (err) {
-                                                alert('Error al subir archivo');
-                                            }
+                                            if (file) await handleImportEvents(file);
                                             e.target.value = '';
                                         }}
                                     />
@@ -1114,7 +509,7 @@ export default function AdminPage() {
                                 {events.map((event: any) => (
                                     <div key={event.id} className="bg-white rounded-[20px] p-4 shadow-[0px_18px_40px_rgba(112,144,176,0.12)] group">
                                         <div className="relative h-32 w-full rounded-[16px] overflow-hidden mb-3 bg-gray-100">
-                                            {event.imageUrl && <img src={event.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />}
+                                            {event.imageUrl && <img loading="lazy" src={event.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />}
                                             <div className="absolute top-2 right-2 flex gap-1">
                                                 {event.isFeatured && (
                                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white bg-[#277FA4]">★</span>
@@ -1138,17 +533,14 @@ export default function AdminPage() {
                                                     <Icon icon="solar:pen-bold" width={14} />
                                                 </button>
                                                 <button
-                                                    onClick={async () => {
-                                                        await fetch(`${API_URL}/events/${event.id}/toggle-status`, { method: 'PATCH', headers: { Authorization: `Bearer ${getToken()}` } });
-                                                        fetchEvents(eventsPage);
-                                                    }}
+                                                    onClick={() => toggleEventStatus(event.id)}
                                                     className="text-[#277FA4] bg-[#E0F2F7] p-1.5 rounded-lg hover:bg-[#D6D6FF]"
                                                     title={event.isActive ? 'Desactivar' : 'Activar'}
                                                 >
                                                     <Icon icon={event.isActive ? "solar:eye-linear" : "solar:eye-closed-linear"} width={14} />
                                                 </button>
                                                 <button
-                                                    onClick={async () => { if (!confirm('¿Eliminar?')) return; await fetch(`${API_URL}/events/${event.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${getToken()}` } }); fetchEvents(eventsPage); }}
+                                                    onClick={() => deleteEvent(event.id)}
                                                     className="text-[#E31A1A] bg-[#FFEAEA] p-1.5 rounded-lg hover:bg-[#FFD6D6]"
                                                 >
                                                     <Icon icon="solar:trash-bin-trash-bold" width={14} />
@@ -1178,7 +570,7 @@ export default function AdminPage() {
                                                     <td className="p-3">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-12 h-12 rounded-lg flex-shrink-0 bg-gray-100 overflow-hidden">
-                                                                {event.imageUrl && <img src={event.imageUrl} className="w-full h-full object-cover" />}
+                                                                {event.imageUrl && <img loading="lazy" src={event.imageUrl} className="w-full h-full object-cover" />}
                                                             </div>
                                                             <div>
                                                                 <h5 className="text-slate-800 font-bold text-sm line-clamp-1">
@@ -1200,10 +592,7 @@ export default function AdminPage() {
                                                         <div className="flex gap-2">
                                                             <button onClick={() => { setEditingEvent(event); setIsEventModalOpen(true); }} className="text-[#277FA4] font-bold text-sm hover:underline">Editar</button>
                                                             <button
-                                                                onClick={async () => {
-                                                                    await fetch(`${API_URL}/events/${event.id}/toggle-status`, { method: 'PATCH', headers: { Authorization: `Bearer ${getToken()}` } });
-                                                                    fetchEvents(eventsPage);
-                                                                }}
+                                                                onClick={() => toggleEventStatus(event.id)}
                                                                 className="text-slate-400 font-bold text-sm hover:underline"
                                                             >
                                                                 {event.isActive ? 'Desact.' : 'Activar'}
@@ -1282,27 +671,16 @@ export default function AdminPage() {
                         };
 
                         const isEdit = data.isEdit && data.eventId;
-                        const url = isEdit ? `${API_URL}/events/${data.eventId}` : `${API_URL}/events`;
-                        const method = isEdit ? 'PATCH' : 'POST';
-
-                        const res = await fetch(url, {
-                            method,
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${getToken()}`
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        if (res.ok) {
+                        const resp: any = isEdit ? await patch(`events/${data.eventId}`, payload) : await post('events', payload);
+                        if (isApiError(resp)) {
+                            notify(`Error: ${resp.message || 'No se pudo guardar el evento'}`, 'error');
+                        } else {
                             setIsEventModalOpen(false);
                             setEditingEvent(null);
                             fetchEvents(eventsPage);
-                        } else {
-                            const err = await res.json();
-                            alert(`Error: ${err.message || 'No se pudo guardar el evento'}`);
                         }
                     } catch (e) {
-                        alert('Error al guardar evento');
+                        notify('Error al guardar evento', 'error');
                     }
                 }}
                 categories={categories}

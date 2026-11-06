@@ -1,29 +1,34 @@
 import { create } from 'zustand';
 import { get, post } from '../utils/fetch';
-import { IEmail, IResponse } from '../interfaces/auth';
-import { IUser } from '../interfaces/auth';
+import { IEmail, IUser, LoginInput, LoginResponse, RegisterInput, ResetPasswordInput } from '../interfaces/auth';
 import useAlertStore from './alert';
 
 export interface IAuthState {
-    signIn: (data: any) => Promise<any>;
+    signIn: (data: RegisterInput) => Promise<{ userId?: string; email?: string; message?: string } | undefined>;
     auth: IUser | null;
     me: () => Promise<void>;
     logout: () => void;
-    login: (data: any) => Promise<{ success: boolean; message?: string }>;
+    login: (data: LoginInput) => Promise<{ success: boolean; message?: string }>;
     sendEmail: (email: IEmail) => Promise<void>
     verifyCode: (email: string, code: string) => Promise<boolean>;
     forgotPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
-    resetPassword: (data: any) => Promise<{ success: boolean; message?: string }>;
+    resetPassword: (data: ResetPasswordInput) => Promise<{ success: boolean; message?: string }>;
     success: boolean
+    // Global login/register modal (rendered by the Header) so any page can request it
+    authModal: { open: boolean; register: boolean }
+    openAuthModal: (register?: boolean) => void
+    closeAuthModal: () => void
 }
 
 export const useAuthStore = create<IAuthState>((set, _get) => ({
     success: false,
     auth: null,
-    login: async (data: any) => {
+    authModal: { open: false, register: false },
+    openAuthModal: (register = false) => set({ authModal: { open: true, register } }),
+    closeAuthModal: () => set({ authModal: { open: false, register: false } }),
+    login: async (data) => {
         try {
-            const resp: any = await post(`auth/login`, data);
-            console.log(resp)
+            const resp = await post<LoginResponse>(`auth/login`, data);
             if (resp.accessToken && resp.user) {
                 localStorage.setItem("token", resp.accessToken);
                 if (resp.refreshToken) {
@@ -35,27 +40,25 @@ export const useAuthStore = create<IAuthState>((set, _get) => ({
                 set({ auth: null })
                 return { success: false, message: resp?.message || "La contraseña o el usuario son incorrectos" };
             }
-        } catch (error: any) {
-            return { success: false, message: error?.message || "El usuario o contraseña son incorrectas" };
+        } catch (error) {
+            return { success: false, message: (error as Error)?.message || "El usuario o contraseña son incorrectas" };
         }
     },
-    signIn: async (data: any) => {
+    signIn: async (data) => {
         try {
-            const resp: any = await post(`auth/register`, data);
-            console.log(resp)
+            const resp = await post<{ userId?: string; email?: string; message?: string }>(`auth/register`, data);
             if (resp.userId) {
                 // Return response to allow component to handle step change
                 return resp;
             }
-        } catch (error: any) {
-            useAlertStore.getState().alert(error?.message || "Error al registrar usuario", "error");
+        } catch (error) {
+            useAlertStore.getState().alert((error as Error)?.message || "Error al registrar usuario", "error");
             throw error;
         }
     },
     me: async () => {
         try {
-            const user: any = await get(`auth/me`);
-            console.log(user)
+            const user = await get<IUser>(`auth/me`);
             if (user && user.id) {
                 set({ auth: user });
             } else {
@@ -67,18 +70,17 @@ export const useAuthStore = create<IAuthState>((set, _get) => ({
     },
     sendEmail: async (email: IEmail) => {
         try {
-            const resp: any = await post(`newsletter/subscribe`, email);
-            console.log(resp)
+            const resp = await post<{ message?: string }>(`newsletter/subscribe`, email);
             if (resp.message) {
                 useAlertStore.getState().alert(resp.message, "success");
             }
-        } catch (error: any) {
-            useAlertStore.getState().alert(error?.message || "Error al suscribir", "error");
+        } catch (error) {
+            useAlertStore.getState().alert((error as Error)?.message || "Error al suscribir", "error");
         }
     },
     verifyCode: async (email: string, code: string) => {
         try {
-            const resp: any = await post(`auth/verify-code`, { email, code });
+            const resp = await post<LoginResponse>(`auth/verify-code`, { email, code });
 
             // Backend returns { accessToken, refreshToken } on success, no "user" object
             if (resp.accessToken) {
@@ -94,33 +96,34 @@ export const useAuthStore = create<IAuthState>((set, _get) => ({
                 return true;
             }
             return false;
-        } catch (error: any) {
-            useAlertStore.getState().alert(error?.message || "Código inválido", "error");
+        } catch (error) {
+            useAlertStore.getState().alert((error as Error)?.message || "Código inválido", "error");
             throw error;
         }
     },
     forgotPassword: async (email: string) => {
         try {
-            const resp: any = await post(`auth/forgot-password`, { email });
+            const resp = await post<{ message?: string }>(`auth/forgot-password`, { email });
             return { success: true, message: resp.message };
-        } catch (error: any) {
-            useAlertStore.getState().alert(error?.message || "Error al solicitar recuperación", "error");
-            return { success: false, message: error?.message };
+        } catch (error) {
+            useAlertStore.getState().alert((error as Error)?.message || "Error al solicitar recuperación", "error");
+            return { success: false, message: (error as Error)?.message };
         }
     },
-    resetPassword: async (data: any) => {
+    resetPassword: async (data) => {
         try {
-            const resp: any = await post(`auth/reset-password`, data);
+            const resp = await post<{ message?: string }>(`auth/reset-password`, data);
             useAlertStore.getState().alert(resp.message || "Contraseña restablecida", "success");
             return { success: true };
-        } catch (error: any) {
-            useAlertStore.getState().alert(error?.message || "Error al restablecer contraseña", "error");
-            return { success: false, message: error?.message };
+        } catch (error) {
+            useAlertStore.getState().alert((error as Error)?.message || "Error al restablecer contraseña", "error");
+            return { success: false, message: (error as Error)?.message };
         }
     },
     logout: () => {
         if (typeof window !== "undefined") {
             localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
             set({ auth: null, success: false });
         }
     },

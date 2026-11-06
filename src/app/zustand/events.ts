@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import { get } from '../utils/fetch';
-import { Event, IResponse } from '../interfaces/event';
+import { Event, Id, BackendEvent, BackendEventList, EventDetail, EventSearchResponse } from '../interfaces/event';
 import useAlertStore from './alert';
-import moment from 'moment';
 
 export interface IEventsState {
     getEvents: (page?: number) => void;
@@ -18,44 +17,50 @@ export interface IEventsState {
     resetEventBySearch: () => void
     resetEvent: () => void
     events: Event[];
-    eventSearch: any
+    eventSearch: Event[] | null
     total: number
-    eventSearchByFilters: any
+    eventSearchByFilters: Event[]
     valueSearch: string
-    dataEvent: any,
-    getEventBySearch: (data: string) => any
-    setEventsAsFavorite: (idEvento: any, resp: any) => any
-    setEventDataFavorite: (idEvento: any, resp: any) => any
-    setEventFiltersFavorite: (idEvento: any, resp: any) => any
-    setEventsDeleteFavorite: (idFavorito: any) => any
-    setEventDataDeleteDFavorite: (idFavorito: any) => any
-    setEventDeleteFiltersFavorite: (idFavorito: any) => any
-    setEventsDeleteFavoriteByEventId: (eventId: any) => void;
-    setEventDeleteFiltersFavoriteByEventId: (eventId: any) => void;
-    setEventDataDeleteFavoriteByEventId: (eventId: any) => void;
-    getEventByEventAndDate: (event: number, date: number) => any
-    getEventSearchByFilters: (params: any, options?: { page?: number, isLoadMore?: boolean, limit?: number }) => any
-    setFeaturedEventsAsFavorite: (idEvento: any, resp: any) => any
-    setFeaturedEventsDeleteFavorite: (idFavorito: any) => any
-    setFeaturedEventsDeleteFavoriteByEventId: (eventId: any) => void
-    updateEventsWithFavorites: (favorites: any[]) => void
-    getValueSearch: (value: string) => any
+    dataEvent: EventDetail[] | null,
+    getEventBySearch: (data: string) => Promise<void>
+    setEventsAsFavorite: (idEvento: Id, favoriteId: Id) => void
+    setEventDataFavorite: (idEvento: Id, favoriteId: Id) => void
+    setEventFiltersFavorite: (idEvento: Id, favoriteId: Id) => void
+    setEventsDeleteFavorite: (idFavorito: Id) => void
+    setEventDataDeleteDFavorite: (idFavorito: Id) => void
+    setEventDeleteFiltersFavorite: (idFavorito: Id) => void
+    setEventsDeleteFavoriteByEventId: (eventId: Id) => void;
+    setEventDeleteFiltersFavoriteByEventId: (eventId: Id) => void;
+    setEventDataDeleteFavoriteByEventId: (eventId: Id) => void;
+    getEventDetail: (event: Id) => Promise<void>
+    getEventSearchByFilters: (params: Record<string, any>, options?: { page?: number, isLoadMore?: boolean, limit?: number }) => Promise<void>
+    setFeaturedEventsAsFavorite: (idEvento: Id, favoriteId: Id) => void
+    setFeaturedEventsDeleteFavorite: (idFavorito: Id) => void
+    setFeaturedEventsDeleteFavoriteByEventId: (eventId: Id) => void
+    updateEventsWithFavorites: (favorites: { ideventos?: Id; idEventos?: Id; idfavoritos?: Id }[]) => void
+    getValueSearch: (value: string) => void
 }
 
 // Función para mapear eventos del nuevo backend al formato del frontend antiguo
 // Función para mapear eventos del nuevo backend al formato del frontend antiguo
-export const mapEventFromBackend = (item: any, filterDate?: string): Event => {
+// Bumped on every new search so late responses from older filters are dropped
+let searchSeq = 0;
+
+const toEventArray = (resp: BackendEventList | null | undefined): BackendEvent[] =>
+    Array.isArray(resp) ? resp : (resp?.data || resp?.events || []);
+
+export const mapEventFromBackend = (item: BackendEvent, filterDate?: string): Event => {
     // Logic to find the most relevant upcoming date
     let firstDate = item.dates?.[0];
 
     if (item.dates && item.dates.length > 0) {
         // Sort dates chronologically
-        const sortedDates = [...item.dates].sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedDates = [...item.dates].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         // If a specific filter date is provided, try to find a match
         if (filterDate) {
             // filterDate is usually "DD-MM-YYYY" or "YYYY-MM-DD". Let's handle string inputs carefully.
-            // Assuming filterDate from store is "DD-MM-YYYY" based on usage in page.tsx: setDate(moment(value).format('DD-MM-YYYY'))
+            // Assuming filterDate from store is "DD-MM-YYYY" based on usage in page.tsx: setDate(dayjs(value).format('DD-MM-YYYY'))
             // But verify format. If it comes from `data` in search, it might be in different format.
             // Let's normalize to comparison string YYYY-MM-DD for safety.
 
@@ -64,7 +69,7 @@ export const mapEventFromBackend = (item: any, filterDate?: string): Event => {
                 : null;
 
             // Better yet, just use moment if available or simple date string matching
-            const match = sortedDates.find((d: any) => {
+            const match = sortedDates.find((d) => {
                 const dDate = new Date(d.date).toISOString().split('T')[0]; // YYYY-MM-DD
                 // filterDate should already be in YYYY-MM-DD format from buildSearchData()
                 return dDate === filterDate;
@@ -76,13 +81,13 @@ export const mapEventFromBackend = (item: any, filterDate?: string): Event => {
                 // Fallback to upcoming logic if no exact match (though backend likely filtered by it)
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const upcoming = sortedDates.find((d: any) => new Date(d.date).getTime() >= today.getTime());
+                const upcoming = sortedDates.find((d) => new Date(d.date).getTime() >= today.getTime());
                 firstDate = upcoming || sortedDates[0];
             }
         } else {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const upcoming = sortedDates.find((d: any) => new Date(d.date).getTime() >= today.getTime());
+            const upcoming = sortedDates.find((d) => new Date(d.date).getTime() >= today.getTime());
             firstDate = upcoming || sortedDates[0];
         }
     }
@@ -97,11 +102,11 @@ export const mapEventFromBackend = (item: any, filterDate?: string): Event => {
 
         // Datos principales
         titulo: item.title,
-        url: item.imageUrl,
+        url: item.imageUrl || '',
         Destacado: item.isFeatured ? 1 : 0,
 
         // Fecha y hora
-        FechaInicio: firstDate?.date || item.createdAt,
+        FechaInicio: firstDate?.date || item.createdAt || '',
         HoraInicio: firstDate?.startTime || '',
         HoraFinal: firstDate?.endTime || '',
 
@@ -130,6 +135,21 @@ export const mapEventFromBackend = (item: any, filterDate?: string): Event => {
         ticketUrls: item.ticketUrls || [],
     };
 };
+
+// Shape expected by the event detail page: [{ data: [event], dataFecha, dataPlataformaVenta, owner }]
+export const transformEventDetail = (resp: BackendEvent): EventDetail[] => [{
+    data: [mapEventFromBackend(resp)],
+    dataFecha: (resp.dates || []).map((d) => ({
+        idfecha: d.id,
+        evento_id: resp.id,
+        FechaInicio: d.date,
+        HoraInicio: d.startTime,
+        HoraFinal: d.endTime,
+        Monto: d.price
+    })),
+    dataPlataformaVenta: [],
+    owner: resp.user,
+}];
 
 export const useEventStore = create<IEventsState>((set, _get) => ({
     isLoading: false,
@@ -165,11 +185,11 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
         try {
             console.log(`Loading page ${page}`);
             // Use proper page-based pagination
-            const resp: any = await get(`events/public/search?page=${page}&limit=12&excludeFeatured=true&expandDates=false`);
+            const resp = await get<EventSearchResponse>(`events/public/search?page=${page}&limit=12&excludeFeatured=true&expandDates=false`);
             console.log(resp);
 
             if (resp?.eventos && Array.isArray(resp.eventos)) {
-                const newEvents = resp.eventos.map((item: any) => mapEventFromBackend(item));
+                const newEvents = resp.eventos.map((item) => mapEventFromBackend(item));
 
                 set((state) => ({
                     // Append new events if page > 1, otherwise replace
@@ -186,13 +206,13 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
     },
     getEventsDestacades: async () => {
         try {
-            const resp: any = await get(`events/featured`);
+            const resp = await get<BackendEventList>(`events/featured`);
             console.log(resp)
             // El backend puede retornar { data: [...] } o un array directo
-            const eventsArray = resp?.data && Array.isArray(resp.data) ? resp.data : (Array.isArray(resp) ? resp : []);
+            const eventsArray = toEventArray(resp);
             if (eventsArray.length > 0) {
                 set({
-                    eventsDestacades: eventsArray.map((item: any) => mapEventFromBackend(item))
+                    eventsDestacades: eventsArray.map((item) => mapEventFromBackend(item))
                 });
             } else {
                 set({ eventsDestacades: [] })
@@ -205,13 +225,13 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
     getBannerEvents: async () => {
         try {
             // Fetch events marked as isBanner=true
-            const resp: any = await get(`events?isBanner=true&limit=10`);
+            const resp = await get<BackendEventList>(`events?isBanner=true&limit=10`);
             console.log("Banner events:", resp);
-            const eventsArray = resp?.data && Array.isArray(resp.data) ? resp.data : (Array.isArray(resp?.events) ? resp.events : (Array.isArray(resp) ? resp : []));
+            const eventsArray = toEventArray(resp);
 
             if (eventsArray.length > 0) {
                 set({
-                    bannerEvents: eventsArray.map((item: any) => mapEventFromBackend(item))
+                    bannerEvents: eventsArray.map((item) => mapEventFromBackend(item))
                 });
             } else {
                 set({ bannerEvents: [] })
@@ -224,11 +244,11 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
     setEventsAsFavorite: (idEvento, resp) => {
         console.log(idEvento, resp)
 
-        set((state: any) => {
+        set((state) => {
             console.log(state.events)
             return (
                 {
-                    events: state?.events?.map((event: any) =>
+                    events: state?.events?.map((event) =>
                         event.idEventos === idEvento
                             ? { ...event, esfavorito: event.esfavorito === 0 ? 1 : 0, favorito: resp }
                             : event
@@ -236,10 +256,10 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
                 });
         })
     },
-    setEventFiltersFavorite: (idEvento: any, resp: number) => {
+    setEventFiltersFavorite: (idEvento, resp) => {
         console.log(idEvento, resp)
-        set((state: any) => ({
-            eventSearchByFilters: state?.eventSearchByFilters?.map((event: any) =>
+        set((state) => ({
+            eventSearchByFilters: state?.eventSearchByFilters?.map((event) =>
                 (event.ideventos || event.idEventos) === idEvento
                     ? { ...event, esfavorito: event.esfavorito === 0 ? 1 : 0, favorito: resp }
                     : event
@@ -247,11 +267,11 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
             ),
         }));
     },
-    setEventDataFavorite: (idEvento: any, resp: number) => {
-        set((state: any) => ({
-            dataEvent: state?.dataEvent?.map((dataEventItem: any) => ({
+    setEventDataFavorite: (idEvento, resp) => {
+        set((state) => ({
+            dataEvent: state?.dataEvent?.map((dataEventItem) => ({
                 ...dataEventItem,
-                data: dataEventItem?.data?.map((item: any) =>
+                data: dataEventItem?.data?.map((item) =>
                     (item.ideventos || item.idEventos) === idEvento
                         ? { ...item, favorito: resp }
                         : item
@@ -259,29 +279,29 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
             })),
         }));
     },
-    setEventsDeleteFavorite: (favorito: any) => {
-        set((state: any) => ({
-            events: state?.events?.map((item: any) =>
+    setEventsDeleteFavorite: (favorito) => {
+        set((state) => ({
+            events: state?.events?.map((item) =>
                 item.favorito === favorito
                     ? { ...item, esfavorito: 0, favorito: null }
                     : item
             )
         }));
     },
-    setEventDeleteFiltersFavorite: (favorito: any) => {
-        set((state: any) => ({
-            eventSearchByFilters: state?.eventSearchByFilters?.map((item: any) =>
+    setEventDeleteFiltersFavorite: (favorito) => {
+        set((state) => ({
+            eventSearchByFilters: state?.eventSearchByFilters?.map((item) =>
                 item.favorito === favorito
                     ? { ...item, favorito: null, esfavorito: 0 }
                     : item
             )
         }));
     },
-    setEventDataDeleteDFavorite: (favorito: any) => {
-        set((state: any) => ({
-            dataEvent: state?.dataEvent?.map((dataEventItem: any) => ({
+    setEventDataDeleteDFavorite: (favorito) => {
+        set((state) => ({
+            dataEvent: state?.dataEvent?.map((dataEventItem) => ({
                 ...dataEventItem,
-                data: dataEventItem?.data?.map((item: any) =>
+                data: dataEventItem?.data?.map((item) =>
                     item.favorito === favorito
                         ? { ...item, favorito: null, esfavorito: 0 }
                         : item
@@ -290,29 +310,29 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
         }));
     },
     // Nuevas funciones para eliminar favorito por ID de Evento (más seguro)
-    setEventsDeleteFavoriteByEventId: (eventId: any) => {
-        set((state: any) => ({
-            events: state?.events?.map((item: any) =>
+    setEventsDeleteFavoriteByEventId: (eventId) => {
+        set((state) => ({
+            events: state?.events?.map((item) =>
                 (item.ideventos || item.idEventos) === eventId
                     ? { ...item, esfavorito: 0, favorito: null }
                     : item
             )
         }));
     },
-    setEventDeleteFiltersFavoriteByEventId: (eventId: any) => {
-        set((state: any) => ({
-            eventSearchByFilters: state?.eventSearchByFilters?.map((item: any) =>
+    setEventDeleteFiltersFavoriteByEventId: (eventId) => {
+        set((state) => ({
+            eventSearchByFilters: state?.eventSearchByFilters?.map((item) =>
                 (item.ideventos || item.idEventos) === eventId
                     ? { ...item, favorito: null, esfavorito: 0 }
                     : item
             )
         }));
     },
-    setEventDataDeleteFavoriteByEventId: (eventId: any) => {
-        set((state: any) => ({
-            dataEvent: state?.dataEvent?.map((dataEventItem: any) => ({
+    setEventDataDeleteFavoriteByEventId: (eventId) => {
+        set((state) => ({
+            dataEvent: state?.dataEvent?.map((dataEventItem) => ({
                 ...dataEventItem,
-                data: dataEventItem?.data?.map((item: any) =>
+                data: dataEventItem?.data?.map((item) =>
                     (item.ideventos || item.idEventos) === eventId
                         ? { ...item, favorito: null, esfavorito: 0 }
                         : item
@@ -320,27 +340,27 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
             })),
         }));
     },
-    setFeaturedEventsAsFavorite: (idEvento: any, resp: any) => {
-        set((state: any) => ({
-            eventsDestacades: state?.eventsDestacades?.map((event: any) =>
+    setFeaturedEventsAsFavorite: (idEvento, resp) => {
+        set((state) => ({
+            eventsDestacades: state?.eventsDestacades?.map((event) =>
                 (event.ideventos || event.idEventos) === idEvento
                     ? { ...event, esfavorito: 1, favorito: resp }
                     : event
             )
         }));
     },
-    setFeaturedEventsDeleteFavorite: (favorito: any) => {
-        set((state: any) => ({
-            eventsDestacades: state?.eventsDestacades?.map((item: any) =>
+    setFeaturedEventsDeleteFavorite: (favorito) => {
+        set((state) => ({
+            eventsDestacades: state?.eventsDestacades?.map((item) =>
                 item.favorito === favorito
                     ? { ...item, esfavorito: 0, favorito: null }
                     : item
             )
         }));
     },
-    setFeaturedEventsDeleteFavoriteByEventId: (eventId: any) => {
-        set((state: any) => ({
-            eventsDestacades: state?.eventsDestacades?.map((item: any) =>
+    setFeaturedEventsDeleteFavoriteByEventId: (eventId) => {
+        set((state) => ({
+            eventsDestacades: state?.eventsDestacades?.map((item) =>
                 (item.ideventos || item.idEventos) === eventId
                     ? { ...item, esfavorito: 0, favorito: null }
                     : item
@@ -349,20 +369,20 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
     },
     getEventBySearch: async (palabraBusqueda: string) => {
         try {
-            const resp: any = await get(`events/search?q=${palabraBusqueda}`);
+            const resp = await get<{ data?: BackendEvent[] }>(`events/search?q=${encodeURIComponent(palabraBusqueda)}`);
             console.log(resp)
             if (resp?.data && Array.isArray(resp.data)) {
                 // Map backend response to frontend format, expanding by dates
-                const allEvents: any[] = [];
+                const allEvents: Event[] = [];
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
-                resp.data.forEach((item: any) => {
+                resp.data.forEach((item) => {
                     // Filter and sort verified upcoming dates
-                    let eventDates = item.dates || [];
+                    const eventDates = item.dates || [];
 
                     // Filter future dates
-                    const upcomingDates = eventDates.filter((d: any) => {
+                    const upcomingDates = eventDates.filter((d) => {
                         const dateObj = new Date(d.date);
                         // Optional: clear time component for strict date comparison if needed
                         // dateObj.setHours(0,0,0,0); 
@@ -375,7 +395,7 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
 
                     // If we have upcoming dates, generate an item for EACH date
                     if (upcomingDates.length > 0) {
-                        upcomingDates.forEach((dateInfo: any) => {
+                        upcomingDates.forEach((dateInfo) => {
                             // Create a base mapped event using the standard mapper 
                             // (which might default to first date logic, but we override it)
                             const baseEvent = mapEventFromBackend(item);
@@ -385,9 +405,9 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
                                 ...baseEvent,
                                 idfecha: dateInfo.id,
                                 FechaInicio: dateInfo.date,
-                                HoraInicio: dateInfo.startTime,
-                                HoraFinal: dateInfo.endTime,
-                                Monto: dateInfo.price,
+                                HoraInicio: dateInfo.startTime || '',
+                                HoraFinal: dateInfo.endTime || '',
+                                Monto: dateInfo.price || 0,
                                 EsGratis: (dateInfo.price === 0 || !dateInfo.price) ? 1 : 0
                             };
                             allEvents.push(specificEventInstance);
@@ -415,49 +435,15 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
             set({ eventSearch: null })
         }
     },
-    getEventByEventAndDate: async (event: number, date: number) => {
-        console.log("getEventByEventAndDate", event)
+    getEventDetail: async (event) => {
         try {
-            const resp: any = await get(`events/detail/${event}/${date}`);
-            console.log("Detail resp:", resp)
+            const resp = await get<BackendEvent>(`events/detail/${event}`);
 
             if (resp && resp.id) {
                 // Transform backend response to frontend expected structure (Array)
                 // Expected: [{ data: [event], dataFecha: [dates], dataPlataformaVenta: [...] }]
 
-                const mappedEvent = mapEventFromBackend(resp);
-                const dates = resp.dates || [];
-
-                // Construct platform sales data from websiteUrl
-                const plataformaVenta: any[] = [];
-                // if (resp.websiteUrl) {
-                //     plataformaVenta.push({
-                //         nombrePlataforma: "Comprar Entrada",
-                //         urlWebLugar: resp.websiteUrl,
-                //         iconos: "/svg/tickets_gray.svg" // Default icon or map based on URL
-                //     });
-                // } else if (resp.link) {
-                //     plataformaVenta.push({
-                //         nombrePlataforma: "Más Info",
-                //         urlWebLugar: resp.link,
-                //         iconos: "/svg/tickets_gray.svg"
-                //     });
-                // }
-
-                const transformedData = [{
-                    data: [mappedEvent],
-                    dataFecha: dates.map((d: any) => ({
-                        idfecha: d.id,
-                        evento_id: resp.id, // Add event ID here
-                        FechaInicio: d.date,
-                        HoraInicio: d.startTime,
-                        HoraFinal: d.endTime,
-                        Monto: d.price
-                    })),
-                    dataPlataformaVenta: plataformaVenta,
-                    owner: resp.user,
-                }];
-
+                const transformedData = transformEventDetail(resp);
                 set({ dataEvent: transformedData });
             } else {
                 set({ dataEvent: null })
@@ -469,8 +455,7 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
     },
     // aqui se llama asi por que el api debe ser con params pero metodo get y no post 
     // aqui se llama asi por que el api debe ser con params pero metodo get y no post 
-    getEventSearchByFilters: async (data: any, options?: { page?: number, isLoadMore?: boolean, limit?: number }) => {
-        console.log("Searching with filters:", data, options);
+    getEventSearchByFilters: async (data, options?: { page?: number, isLoadMore?: boolean, limit?: number }) => {
 
         // Remove empty/undefined params
         const filteredParams = Object.entries(data)
@@ -482,23 +467,27 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
         const limit = options?.limit || 12;
 
         // Construct query string
-        const queryParams: any = { ...filteredParams, page, limit };
+        const queryParams = { ...filteredParams, page: String(page), limit: String(limit) };
         const query = new URLSearchParams(queryParams).toString();
 
+        // A new search outdates every request still in flight; load-more keeps the current one
+        const seq = options?.isLoadMore ? searchSeq : ++searchSeq;
+        if (!options?.isLoadMore) set({ isLoading: true });
         try {
             // Extract date from params to pass to mapper
             const params = new URLSearchParams(data);
             const dateFilter = params.get('fechaInicio') || undefined;
 
-            const resp: any = await get(`events/public/search?${query}`);
-            console.log("Search response:", resp);
+            const resp = await get<EventSearchResponse>(`events/public/search?${query}`);
+            if (seq !== searchSeq) return; // the user already changed the filters
+            if (!options?.isLoadMore) set({ isLoading: false });
 
             if (resp && Array.isArray(resp.eventos)) {
-                const mappedEvents = resp.eventos.map((item: any) => mapEventFromBackend(item, dateFilter))
-                    .sort((a: any, b: any) => new Date(a.FechaInicio).getTime() - new Date(b.FechaInicio).getTime());
+                const mappedEvents = resp.eventos.map((item) => mapEventFromBackend(item, dateFilter))
+                    .sort((a, b) => new Date(a.FechaInicio).getTime() - new Date(b.FechaInicio).getTime());
 
                 if (options?.isLoadMore) {
-                    set((state: any) => ({
+                    set((state) => ({
                         eventSearchByFilters: [...(state.eventSearchByFilters || []), ...mappedEvents],
                         total: resp.total || 0
                     }));
@@ -512,21 +501,23 @@ export const useEventStore = create<IEventsState>((set, _get) => ({
             }
         } catch (error) {
             console.error('Error searching events by filters:', error);
+            if (seq !== searchSeq) return;
             if (!options?.isLoadMore) {
+                set({ isLoading: false });
                 set({ eventSearchByFilters: [], total: 0 })
             }
         }
     },
-    updateEventsWithFavorites: (favorites: any[]) => {
+    updateEventsWithFavorites: (favorites) => {
         // Create a Set of Favorite Event IDs for O(1) lookups
-        const favoriteEventIds = new Set(favorites.map((f: any) => f.ideventos || f.idEventos));
-        const favoriteMap = new Map(favorites.map((f: any) => [f.ideventos || f.idEventos, f.idfavoritos])); // Map EventID -> FavoriteID
+        const favoriteEventIds = new Set(favorites.map((f) => f.ideventos || f.idEventos));
+        const favoriteMap = new Map(favorites.map((f) => [f.ideventos || f.idEventos, f.idfavoritos])); // Map EventID -> FavoriteID
 
-        set((state: any) => {
-            const updateList = (list: any[]) => list?.map((event: any) => {
+        set((state) => {
+            const updateList = (list: Event[] | null) => list?.map((event) => {
                 const eventId = event.ideventos || event.idEventos;
                 if (favoriteEventIds.has(eventId)) {
-                    return { ...event, esfavorito: 1, favorito: favoriteMap.get(eventId) };
+                    return { ...event, esfavorito: 1, favorito: favoriteMap.get(eventId) ?? null };
                 }
                 return event;
             }) || [];

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import moment from 'moment';
+import dayjs from '@/app/utils/date';
 
 import Auth from '@/app/ui/Auth';
 import { useAuthStore } from '@/app/zustand/auth';
@@ -90,7 +90,7 @@ export default function EditarPerfilPage() {
       setCity(profile.city || '');
       setCountry(profile.country || '');
       setGender(profile.gender || '');
-      setBirthDate(profile.birthDate ? moment.utc(profile.birthDate).format('YYYY-MM-DD') : '');
+      setBirthDate(profile.birthDate ? dayjs.utc(profile.birthDate).format('YYYY-MM-DD') : '');
       setRuc(profile.ruc || '');
       setRazonSocial(profile.razonSocial || '');
       setDni(profile.dni || '');
@@ -434,7 +434,7 @@ export default function EditarPerfilPage() {
                 </div>
 
                 {/* Convertirse en empresa */}
-                <div className="mt-8 border border-solid border-[#EDEFF5] rounded-2xl p-6">
+                <div id="empresa" className="mt-8 scroll-mt-24 border border-solid border-[#EDEFF5] rounded-2xl p-6">
                   {isCompany ? (
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 bg-[#E7F8EF] text-[#1D9A5D] rounded-full flex items-center justify-center flex-shrink-0">

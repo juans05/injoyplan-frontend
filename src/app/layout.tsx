@@ -1,15 +1,17 @@
-
 import type { Metadata } from "next";
 import "./globals.css";
-import { quicksand } from "../../public/fonts";
+import { jakarta } from "../../public/fonts";
 import ClientLayout from "./clienteLayout";
+import { SITE_URL } from "./utils/fetch";
+
+const description = "Encuentra conciertos, teatro, ferias y experiencias. Filtra por fecha, distrito y precio y guarda tus planes favoritos.";
 
 export const metadata: Metadata = {
-  title: "Injoyplan",
-  description: "Injoyplan plataforma web que necesitas para poder ver los eventos más importantes para tí",
-  icons: {
-    icon: '/svg/logo.svg'
-  }
+  metadataBase: new URL(SITE_URL),
+  title: { default: "Injoyplan | Eventos y experiencias para disfrutar", template: "%s" },
+  description,
+  icons: { icon: '/svg/logo.svg' },
+  openGraph: { title: "Injoyplan", description, siteName: "Injoyplan", locale: "es_PE", type: "website" },
 };
 
 export default function RootLayout({
@@ -17,28 +19,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
-    <html lang="en">
-      <head>
-        <link rel="icon" href="/svg/logo.svg" />
-      </head>
-      <body className={`${quicksand.className}`}>
-        <ClientLayout children={children} />
+    <html lang="es">
+      <body className={`${jakarta.variable} ${jakarta.className} font-sans`}>
+        <ClientLayout>{children}</ClientLayout>
       </body>
-      <link
-        precedence="default"
-        rel="stylesheet"
-        type="text/css"
-        charSet="UTF-8"
-        href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick.min.css"
-      />
-      <link
-        precedence="default"
-        rel="stylesheet"
-        type="text/css"
-        href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.6.0/slick-theme.min.css"
-      />
     </html>
   );
 }

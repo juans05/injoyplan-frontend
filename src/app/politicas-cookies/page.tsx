@@ -1,6 +1,6 @@
 import privacy from './../../../public/svg/privacy.svg'
 import Image from 'next/image'
-import { quicksand, sans } from '../../../public/fonts'
+import { jakarta } from '../../../public/fonts';
 import Link from 'next/link'
 
 const CookiesPolicy = () => {
@@ -12,11 +12,11 @@ const CookiesPolicy = () => {
                         <Image src={privacy} alt="cookiesimg" className='w-full' />
                     </div>
                     <div>
-                        <h3 className={`${quicksand.className} md:ml-28 ml-10 text-3xl font-bold text-[#9B292B]`}>Políticas de Cookies</h3>
+                        <h3 className={`${jakarta.className} md:ml-28 ml-10 text-3xl font-bold text-[#9B292B]`}>Políticas de Cookies</h3>
                     </div>
                 </div>
             </div>
-            <div className={`${sans.className} max-w-screen-2xl md:w-[1200px] px-5 md:px-0 md:mt-20 mt-12 mx-auto`}>
+            <div className={`${jakarta.className} max-w-[1200px] px-5 md:px-8 xl:px-0 md:mt-20 mt-12 mx-auto`}>
 
                 {/* Introducción */}
                 <div className="mb-8">

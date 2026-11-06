@@ -32,7 +32,7 @@
     text-align: center;
     padding: 10px 0;
     letter-spacing: 1.3px;
-    font-family: 'Quicksand';
+    font-family: inherit;
 }
 
 .bg-success {
@@ -41,7 +41,7 @@
     text-align: center;
     padding: 10px 0;
     letter-spacing: 1.3px;
-    font-family: 'Quicksand';
+    font-family: inherit;
 }
 
 .toast {

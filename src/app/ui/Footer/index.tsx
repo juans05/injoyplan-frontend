@@ -1,186 +1,115 @@
 "use client"
-import mail from '../../../../public/svg/email.svg';
-import facebook from '../../../../public/svg/facebook.svg';
-import twi from '../../../../public/svg/twitter.svg';
-import youtube from '../../../../public/svg/youtube.svg';
-import arrow from '../../../../public/svg/arrowdown.svg';
-import instagram from '../../../../public/svg/instagram.svg';
-import tiktok from '../../../../public/svg/tiktok.svg';
-import libro from '../../../../public/svg/book.svg';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { Icon } from '@iconify/react';
+import logo from '../../../../public/svg/injoyplan.svg';
+import { useCategoriesState } from '../../zustand/categories';
+import usePublishEvent from '@/app/hooks/usePublishEvent';
+import { searchPath } from '@/app/utils/urls';
+
+const NAV = [
+  {
+    title: 'Injoyplan',
+    links: [
+      { label: 'Inicio', href: '/' },
+      { label: 'Explorar eventos', href: '/eventos' },
+      { label: 'Eventos gratuitos', href: '/eventos/gratis' },
+      { label: 'Acerca de nosotros', href: '/nosotros' },
+    ],
+  },
+  {
+    title: 'Ayuda',
+    links: [
+      { label: 'Preguntas frecuentes', href: '/preguntas-frecuentes' },
+      { label: 'Contáctanos', href: '/contactanos' },
+      { label: 'Libro de reclamaciones', href: '/libro-de-reclamaciones' },
+    ],
+  },
+  {
+    title: 'Políticas',
+    links: [
+      { label: 'Política de privacidad', href: '/politicas-privacidad' },
+      { label: 'Política de cookies', href: '/politicas-cookies' },
+      { label: 'Términos y condiciones', href: '/terminos-y-condiciones' },
+    ],
+  },
+];
+
+const SOCIAL = [
+  { label: 'Facebook', href: 'https://www.facebook.com/Injoyplan', icon: 'mdi:facebook' },
+  { label: 'Instagram', href: 'https://www.instagram.com/injoyplan', icon: 'mdi:instagram' },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@injoyplan', icon: 'ic:baseline-tiktok' },
+  { label: 'YouTube', href: 'https://www.youtube.com/@injoyplan', icon: 'mdi:youtube' },
+];
+
+const linkClass = 'inline-block py-1.5 text-label font-normal text-ink-soft transition-colors hover:text-brand';
 
 const Footer = () => {
-  const [openSection, setOpenSection] = useState(null);
-
-  const toggleSection = (section: any) => {
-    setOpenSection(openSection === section ? null : section);
-  };
+  const { countsCategories } = useCategoriesState();
+  const publish = usePublishEvent();
+  // Only shown when the categories are already loaded (home and header fetch them)
+  const categories: any[] = (countsCategories || []).filter((c: any) => c.cantidad > 0).slice(0, 6);
 
   return (
-    <div className="border-t border-[#f1f1f1]">
-      <footer>
-        {/* Desktop View */}
-        <div className="hidden md:block mx-auto 2xl:max-w-screen-2xl xl:max-w-screen-xl max-w-[980px] pt-16 pb-16 xl:px-10">
-          <div className="flex justify-between flex-wrap">
-            <div>
-              <h3 className="font-bold text-xl">Conócenos</h3>
-              <Link href="/nosotros">
-                <p className="font-light mt-6 text-[#212121]">Acerca de nosotros</p>
-              </Link>
-            </div>
-            <div>
-              <h3 className="font-bold text-xl">¿Necesitas ayuda?</h3>
-              <Link href="/preguntas-frecuentes">
-                <p className="font-light mt-6 text-[#212121]">Preguntas frecuentes</p>
-              </Link>
-              <Link href="/contactanos">
-                <p className="font-light mt-6 text-[#212121]">Contáctanos</p>
-              </Link>
-            </div>
-            <div>
-              <h3 className="font-bold text-xl">Políticas</h3>
-              <Link href="/politicas-privacidad">
-                <p className="font-light mt-6 text-[#212121]">Política de privacidad</p>
-              </Link>
-              <Link href="/politicas-cookies">
-                <p className="font-light mt-6 text-[#212121]">Política de cookies</p>
-              </Link>
-              <Link href="/terminos-y-condiciones">
-                <p className="font-light mt-6 text-[#212121]">Términos y condiciones de uso</p>
-              </Link>
-            </div>
-            <div>
-              <h3 className="font-bold text-xl">Contáctanos</h3>
-              <p className="font-light mt-6 text-[#212121]">Escríbenos a nuestra casilla de correo:</p>
-              <strong className="text-xl flex items-center text-[#007FA4] mt-6 font-normal">
-                <Image className="mr-2" src={mail} alt="mail" /> Contacto@injoyplan.com
-              </strong>
-            </div>
+    <footer className="mt-8 border-t border-line bg-white">
+      <div className="container-page grid gap-10 py-12 md:py-16 lg:grid-cols-12">
+        <div className="lg:col-span-4">
+          <Link href="/" aria-label="Injoyplan, ir al inicio">
+            <Image src={logo} alt="Injoyplan" className="h-auto w-[140px]" />
+          </Link>
+          <p className="mt-4 max-w-sm text-label font-normal text-ink-soft">
+            Conciertos, teatro, ferias y experiencias en un solo lugar. Filtra por fecha, distrito y precio.
+          </p>
+          <a href="mailto:Contacto@injoyplan.com" className="mt-5 inline-flex items-center gap-2 text-body font-semibold text-brand hover:text-brand-deep">
+            <Icon icon="solar:letter-linear" width={20} aria-hidden /> Contacto@injoyplan.com
+          </a>
+          <div className="mt-6">
+            <p className="text-body font-bold text-ink">¿Organizas eventos?</p>
+            <button type="button" onClick={publish} className="btn-secondary btn-sm mt-3">Publica tu evento</button>
           </div>
         </div>
 
-        {/* Mobile View */}
-
-        <div className="block md:hidden mx-auto max-w-screen-md pt-8 pb-8">
-          <div className='block md:hidden px-8'>
-            <h3 className="font-bold text-lg">Contáctanos</h3>
-            <p className="text-sm text-[#212121] mt-6">Escríbenos a nuestra casilla de correo:</p>
-            <div className="flex items-center text-[#007FA4] mt-6 mb-10">
-              <Image src={mail} alt="mail" width={24} height={24} className="mr-2" />
-              <strong>Contacto@injoyplan.com</strong>
-            </div>
-          </div>
-          {[
-            { title: 'Conócenos', links: [{ label: 'Acerca de nosotros', href: '/nosotros' }] },
-            {
-              title: '¿Necesitas ayuda?',
-              links: [
-                { label: 'Preguntas frecuentes', href: '/preguntas-frecuentes' },
-                { label: 'Contáctanos', href: '/contactanos' },
-              ],
-            },
-            {
-              title: 'Políticas',
-              links: [
-                { label: 'Política de privacidad', href: '/politicas-privacidad' },
-                { label: 'Política de cookies', href: '/politicas-cookies' },
-                { label: 'Términos y condiciones de uso', href: '/terminos-y-condiciones' },
-              ],
-            },
-          ].map((section, index) => (
-            <div key={index} className="mb-4 border-t border-solid border-[#EDEFF5] pt-4 px-8">
-              <h3
-                className="font-bold text-lg flex justify-between items-center cursor-pointer"
-                onClick={() => toggleSection(index)}
-              >
-                {section.title}
-                <span className="text-xl">{openSection === index ? <Image src={arrow} height={13} width={13} alt='Arrow' /> : <Image src={arrow} height={13} width={13} alt='Arrow' />}</span>
-              </h3>
-              {openSection === index && (
-                <div className="mt-4 space-y-2">
-                  {section.links.map((link, idx) => (
-                    <Link href={link.href} key={idx} className="text-[#212121] text-sm font-light block">
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
+        <nav aria-label="Pie de página" className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-8">
+          {NAV.map((section) => (
+            <div key={section.title}>
+              <h2 className="text-body font-bold text-ink">{section.title}</h2>
+              <ul className="mt-3">
+                {section.links.map((l) => <li key={l.href}><Link href={l.href} className={linkClass}>{l.label}</Link></li>)}
+              </ul>
             </div>
           ))}
-
-          {/* Contact Section */}
-        </div>
-
-        <div className='bg-[#303033] hidden md:block'>
-          <div className='mx-auto 2xl:max-w-screen-2xl xl:max-w-screen-xl max-w-[980px] pt-8 pb-8 xl:px-10 flex justify-between items-center'>
+          {categories.length > 0 && (
             <div>
-              <p className='text-[#fff]'>Copyright © 2026 Injoyplan</p>
+              <h2 className="text-body font-bold text-ink">Categorías</h2>
+              <ul className="mt-3">
+                {categories.map((c) => (
+                  <li key={c.idCategorias}><Link href={searchPath({ categoria: c.nombreCategoria })} className={linkClass}>{c.nombreCategoria}</Link></li>
+                ))}
+              </ul>
             </div>
-            <div className='flex items-center'>
-              <div className='flex justify-between border-r border-solid border-[rgba(255,255,255,0.1)]'>
-                <a href="https://www.facebook.com/Injoyplan" target="_blank" rel="noopener noreferrer">
-                  <Image className='p-2 mr-6 border border-solid rounded-full hover:bg-gray-700' width={34} height={34} objectFit='cover' src={facebook} alt="facebook" />
-                </a>
-                {/* <div>
-                  <Image className='p-2 mr-6 border border-solid rounded-full' width={34} height={34} objectFit='cover' src={twi} alt="twi" />
-                </div> */}
-                <a href="https://www.youtube.com/@injoyplan" target="_blank" rel="noopener noreferrer">
-                  <Image className='p-2 mr-6 border border-solid rounded-full hover:bg-gray-700' width={34} height={34} objectFit='cover' src={youtube} alt="youtube" />
-                </a>
-                <a href="https://www.instagram.com/injoyplan" target="_blank" rel="noopener noreferrer">
-                  <Image className='p-2 mr-6 border border-solid rounded-full hover:bg-gray-700' width={34} height={34} objectFit='cover' src={instagram} alt="instagram" />
-                </a>
-                <a href="https://www.tiktok.com/@injoyplan" target="_blank" rel="noopener noreferrer">
-                  <Image className='p-2 mr-6 border border-solid rounded-full hover:bg-gray-700' width={34} height={34} objectFit='cover' src={tiktok} alt="tiktok" />
-                </a>
-              </div>
-              <div className='ml-6 flex justify-center text-center'>
-                <div className='text-center mx-auto w-full'>
-                  <Link href="/libro-de-reclamaciones" >
-                    <Image width={110} height={100} className='text-center mx-auto' src="https://cdn.shopify.com/s/files/1/0276/9184/3699/files/Libro_reclamaciones_480x480.png?v=1727902723" alt="Libro de Reclamaciones" style={{ objectFit: 'contain' }} />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          )}
+        </nav>
+      </div>
 
-        {/* Footer Bottom */}
-        <div className="bg-[#303033] block md:hidden">
-          <div className="mx-auto 2xl:max-w-screen-2xl xl:max-w-screen-xl max-w-screen-md pt-8 pb-8 flex flex-col sm:flex-row justify-between items-center xl:px-10">
-            {/* Social Icons */}
-            <div className="flex items-center space-x-4">
-              <a href="https://www.facebook.com/Injoyplan" target="_blank" rel="noopener noreferrer" className="p-2 border rounded-full hover:bg-gray-700">
-                <Image src={facebook} alt="facebook" width={16} height={16} />
-              </a>
-              <a href="https://www.instagram.com/injoyplan" target="_blank" rel="noopener noreferrer" className="p-2 border rounded-full hover:bg-gray-700">
-                <Image src={instagram} alt="instagram" width={16} height={16} />
-              </a>
-              <a href="https://www.youtube.com/@injoyplan" target="_blank" rel="noopener noreferrer" className="p-2 border rounded-full hover:bg-gray-700">
-                <Image src={youtube} alt="youtube" width={16} height={16} />
-              </a>
-              <a href="https://www.tiktok.com/@injoyplan" target="_blank" rel="noopener noreferrer" className="p-2 border rounded-full hover:bg-gray-700">
-                <Image src={tiktok} alt="tiktok" width={16} height={16} />
-              </a>
-            </div>
-
-            {/* Libro de Reclamaciones */}
-            <div className="text-center mt-12 sm:mt-0 w-full mx-auto mb-12">
-              <Link href="/libro-de-reclamaciones" >
-                <Image className='mx-auto' src="https://cdn.shopify.com/s/files/1/0276/9184/3699/files/Libro_reclamaciones_480x480.png?v=1727902723" alt="Libro de Reclamaciones" width={150} height={100} style={{ objectFit: 'contain' }} />
-              </Link>
-            </div>
-            <hr className='border-1 border-solid border-[#737373] w-full' />
-            {/* Copyright */}
-            <div className="text-white text-sm mt-6 sm:mt-0">
-              Copyright © 2026 Injoyplan
-            </div>
-          </div>
+      <div className="bg-ink text-white">
+        <div className="container-page flex flex-col items-center gap-6 py-6 md:flex-row md:justify-between">
+          <p className="text-label text-white/75">© {new Date().getFullYear()} Injoyplan</p>
+          <ul className="flex items-center gap-3">
+            {SOCIAL.map((s) => (
+              <li key={s.label}>
+                <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={`Injoyplan en ${s.label}`}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/20 transition-colors hover:bg-white/10">
+                  <Icon icon={s.icon} width={20} aria-hidden />
+                </a>
+              </li>
+            ))}
+          </ul>
+          <Link href="/libro-de-reclamaciones" aria-label="Libro de reclamaciones" className="rounded-control bg-white px-3 py-1.5">
+            <Image width={96} height={40} className="h-10 w-auto object-contain" src="https://cdn.shopify.com/s/files/1/0276/9184/3699/files/Libro_reclamaciones_480x480.png?v=1727902723" alt="Libro de reclamaciones" />
+          </Link>
         </div>
-      </footer>
-    </div>
+      </div>
+    </footer>
   );
 };
 export default Footer;
