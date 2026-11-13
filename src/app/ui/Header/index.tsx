@@ -1,6 +1,7 @@
 "use client";
 import Link from 'next/link'
 import Image from 'next/image';
+import ImagePeek from '@/app/components/ImagePeek';
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Icon } from '@iconify/react'
@@ -58,9 +59,9 @@ function SearchResults({ term, onPick }: { term: string; onPick: (term: string) 
                                 onClick={() => onPick(item.titulo)}
                                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-canvas"
                             >
-                                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control bg-brand-mist">
+                                <ImagePeek src={item.url} alt={item.titulo} className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control bg-brand-mist">
                                     {item.url && <Image src={item.url} alt="" fill sizes="48px" className="object-cover" />}
-                                </div>
+                                </ImagePeek>
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate text-label text-ink">{item.titulo}</p>
                                     <p className="truncate text-caption text-ink-soft">{item.NombreLocal}</p>
@@ -155,9 +156,9 @@ function FavoritesList({ onNavigate }: { onNavigate: () => void }) {
             {list.map((item) => (
                 <li key={item.idfavoritos ?? `${item.ideventos}-${item.idfecha}`} className="group relative">
                     <Link href={eventPath(item.ideventos, item.titulo, item.idfecha)} onClick={onNavigate} className="flex items-center gap-3 px-4 py-2.5 pr-12 hover:bg-canvas">
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control bg-brand-mist">
+                        <ImagePeek src={item.url} alt={item.titulo} className="relative h-12 w-12 shrink-0 overflow-hidden rounded-control bg-brand-mist">
                             {item.url && <Image src={item.url} alt="" fill sizes="48px" className="object-cover" />}
-                        </div>
+                        </ImagePeek>
                         <div className="min-w-0">
                             <p className="text-caption font-semibold capitalize text-brand">{shortDate(item.FechaInicio)}{item.HoraInicio ? `, ${item.HoraInicio}` : ''}</p>
                             <p className="truncate text-label text-ink">{item.titulo}</p>

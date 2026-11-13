@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import ImagePeek from '@/app/components/ImagePeek';
 import { Icon } from "@iconify/react";
 import { useRef, useEffect } from "react";
 import dayjs from '@/app/utils/date';
@@ -67,7 +68,7 @@ const Card = ({ item, addFavoritesByUser, heartDisabled, isDragging, featured }:
                 }}
                 className="flex h-full flex-col rounded-card focus-visible:ring-offset-4"
             >
-                <div className={`relative w-full overflow-hidden rounded-card bg-brand-mist ${featured ? 'aspect-[4/3] md:aspect-[16/10] lg:aspect-auto lg:min-h-[320px] lg:flex-1' : 'aspect-[4/3]'}`}>
+                <ImagePeek src={item?.url} alt={item.titulo || 'Evento'} className={`relative w-full overflow-hidden rounded-card bg-brand-mist ${featured ? 'aspect-[4/3] md:aspect-[16/10] lg:aspect-auto lg:min-h-[320px] lg:flex-1' : 'aspect-[4/3]'}`}>
                     {item?.url ? (
                         <Image
                             src={item.url.trim()}
@@ -96,7 +97,7 @@ const Card = ({ item, addFavoritesByUser, heartDisabled, isDragging, featured }:
                             Destacado
                         </span>
                     )}
-                </div>
+                </ImagePeek>
 
                 <div className={`flex flex-col pt-3 ${featured ? 'lg:flex-none' : 'flex-1'}`}>
                     <p className="text-caption font-medium text-ink-soft">

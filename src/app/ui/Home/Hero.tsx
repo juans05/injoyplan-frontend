@@ -1,5 +1,6 @@
 "use client";
 import Image from 'next/image';
+import ImagePeek from '@/app/components/ImagePeek';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useRef, useState } from 'react';
@@ -113,6 +114,7 @@ function BannerCarousel() {
             onFocus={() => { paused.current = true; }}
             onBlur={() => { paused.current = false; }}
         >
+            <ImagePeek src={current?.url} alt={current?.titulo} className="absolute inset-0">
             {bannerEvents.map((item, i) => (
                 <div key={`${item.idEventos}-${item.idfecha}`} aria-hidden={i !== index}
                     className={`absolute inset-0 transition-opacity duration-700 ${i === index ? 'opacity-100' : 'opacity-0'}`}>
@@ -121,8 +123,9 @@ function BannerCarousel() {
                     )}
                 </div>
             ))}
+            </ImagePeek>
             {/* Legibility gradient only behind the caption */}
-            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/40 to-transparent" aria-hidden />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/40 to-transparent" aria-hidden />
 
             <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-7" aria-live="polite">
                 {date && <p className="text-label font-semibold text-white/85">{date.format('dddd D [de] MMMM')}{current.HoraInicio ? `, ${current.HoraInicio}` : ''}</p>}

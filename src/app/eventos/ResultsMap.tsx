@@ -2,6 +2,7 @@
 import 'mapbox-gl/dist/mapbox-gl.css';
 import mapboxgl from 'mapbox-gl';
 import Link from 'next/link';
+import ImagePeek from '@/app/components/ImagePeek';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { get } from '@/app/utils/fetch';
@@ -195,7 +196,7 @@ const ResultsMap = ({ query }: { query: Record<string, string | number | boolean
                                     <Link href={eventPath(event.id, event.title, next?.id)} className="flex gap-3 p-3 transition-colors hover:bg-canvas">
                                         {event.imageUrl
                                             // eslint-disable-next-line @next/next/no-img-element
-                                            ? <img src={event.imageUrl} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-control object-cover" />
+                                            ? <ImagePeek src={event.imageUrl} alt={event.title} className="shrink-0"><img src={event.imageUrl} alt="" loading="lazy" className="h-16 w-16 rounded-control object-cover" /></ImagePeek>
                                             : <span className="h-16 w-16 shrink-0 rounded-control bg-brand-mist" aria-hidden />}
                                         <span className="min-w-0 flex-1">
                                             <span className="line-clamp-2 text-label text-ink">{event.title}</span>

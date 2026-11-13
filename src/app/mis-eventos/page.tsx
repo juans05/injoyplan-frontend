@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import ImagePeek from '@/app/components/ImagePeek';
 import { Icon } from '@iconify/react';
 
 import SidebarLeft from '@/app/ui/Profile/SidebarLeft';
@@ -127,7 +128,7 @@ export default function MisEventosPage() {
                                         className="bg-white rounded-2xl border border-[#EDEFF5] shadow-sm overflow-hidden group hover:shadow-lg transition-shadow"
                                     >
                                         {/* Image */}
-                                        <div className="relative aspect-video bg-gray-100">
+                                        <ImagePeek src={event.imageUrl} alt={event.title} className="relative aspect-video bg-gray-100">
                                             {event.imageUrl ? (
                                                 <Image
                                                     src={event.imageUrl}
@@ -165,7 +166,7 @@ export default function MisEventosPage() {
                                                     <Icon icon="solar:eye-bold" width={20} />
                                                 </Link>
                                             </div>
-                                        </div>
+                                        </ImagePeek>
 
                                         {/* Info */}
                                         <div className="p-4">

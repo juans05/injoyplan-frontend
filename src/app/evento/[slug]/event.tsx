@@ -120,11 +120,14 @@ const EventDate = ({ data, dataFecha, dataPlataformaVenta }: any) => {
                 {/* Header: image, title, actions */}
                 <div className="lg:col-span-7 xl:col-span-8">
                     {event?.url && (
-                        <div className="overflow-hidden rounded-panel bg-brand-mist">
-                            {/* Main image is the LCP element: optimized and eager */}
+                        <a href={/^https?:\/\//i.test(event.url) ? event.url : undefined} target="_blank" rel="noopener noreferrer" title="Ver imagen original" className="group relative block cursor-zoom-in overflow-hidden rounded-panel bg-brand-mist">
+                            {/* Main image is the LCP element: optimized and eager. object-contain: never crop the original artwork (legal) */}
                             <Image src={event.url} alt={event?.titulo || 'Evento'} width={1200} height={630} priority
-                                sizes="(max-width: 1024px) 100vw, 60vw" className="h-auto max-h-[560px] w-full object-cover" />
-                        </div>
+                                sizes="(max-width: 1024px) 100vw, 60vw" className="h-auto max-h-[560px] w-full object-contain" />
+                            <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-caption font-semibold text-white">
+                                <Icon icon="solar:magnifer-zoom-in-linear" width={16} aria-hidden /> Ver original
+                            </span>
+                        </a>
                     )}
                     <h1 className="heading-1 mt-6 !text-h2">{event?.titulo}</h1>
                     <p className="mt-2 text-body font-medium text-ink-soft">

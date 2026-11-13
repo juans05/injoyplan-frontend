@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from "next/image";
+import ImagePeek from '@/app/components/ImagePeek';
 import Link from "next/link";
 import { Icon } from '@iconify/react';
 import { useAuthStore } from '@/app/zustand/auth';
@@ -61,7 +62,7 @@ export default function FeedCard({
     return (
         <div className="relative w-full aspect-[4/5] rounded-[32px] overflow-hidden group shadow-lg">
             {/* Background Image */}
-            <div className="absolute inset-0 bg-gray-200">
+            <ImagePeek src={event.url || event.imageUrl} alt={event.titulo} className="absolute inset-0 bg-gray-200">
                 {event.url || event.imageUrl ? (
                     <Image
                         src={event.url || event.imageUrl || ''}
@@ -74,7 +75,7 @@ export default function FeedCard({
                         <Icon icon="solar:gallery-broken" className="text-gray-400" width={48} />
                     </div>
                 )}
-            </div>
+            </ImagePeek>
 
             {/* Dark Gradient Overlay - Deep at bottom, light at top */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/10 pointer-events-none" />

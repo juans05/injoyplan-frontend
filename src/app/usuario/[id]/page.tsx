@@ -1,6 +1,7 @@
 "use client";
 
 import Image from 'next/image';
+import ImagePeek from '@/app/components/ImagePeek';
 import Link from 'next/link';
 import ReactModal from 'react-modal';
 import { useEffect, useMemo, useState } from 'react';
@@ -247,6 +248,7 @@ export default function UsuarioPage() {
                       const isOwner = String(auth?.id) === String(event.userId);
                       return (
                         <div key={event.id} className="relative aspect-square bg-[#F7F7F7] overflow-hidden group rounded-lg">
+                          <ImagePeek src={event.imageUrl} alt={event.title} className="h-full w-full">
                           <Link
                             href={eventPath(event.id, event.title, event.dates?.[0]?.id)}
                             className="block w-full h-full"
@@ -276,6 +278,7 @@ export default function UsuarioPage() {
                               </div>
                             </div>
                           </Link>
+                          </ImagePeek>
 
                           {/* Edit/Delete Actions */}
                           {isOwner && (
